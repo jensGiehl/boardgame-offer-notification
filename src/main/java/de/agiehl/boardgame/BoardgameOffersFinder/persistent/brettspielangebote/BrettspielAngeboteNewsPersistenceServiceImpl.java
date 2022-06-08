@@ -12,7 +12,7 @@ public class BrettspielAngeboteNewsPersistenceServiceImpl {
 
     private BrettspielAngeboteNewsMapper mapper;
 
-    private BrettspielAngeboteRepository repository;
+    private BrettspielAngeboteNewsRepository repository;
 
     public boolean saveIfNewOrModified(BrettspielAngebotNewsDto dto) {
         BrettspielAngeboteNewsEntity oldEntity = repository.findFirstByUrlOrderByCreateDateDesc(dto.getUrl());

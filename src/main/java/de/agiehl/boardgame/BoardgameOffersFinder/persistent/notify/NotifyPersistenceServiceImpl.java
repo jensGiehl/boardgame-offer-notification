@@ -1,5 +1,7 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.persistent.notify;
 
+import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.NotifyResponse;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.EntityType;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,26 +16,34 @@ public class NotifyPersistenceServiceImpl implements NotifyPersistenceService {
 
     private final NotifyRepository repository;
 
-    @Override
-    public Optional<Long> getMessageIdForUrl(String url) {
-        Optional<NotifyEntity> result = Optional.empty(); // TODO: .findFirstByUrlOrderByCreateDateDesc(url);
-        if (result.isEmpty()) {
-            log.warn("No communication for '{}' found", url);
-            return Optional.empty();
+    public void saveCommunication(NotifyResponse notifyResponse, Long entityId, EntityType entityType, NotifyEntity.MessageType messageType) {
+        Optional<NotifyEntity> oldEntity = repository.findByFkIdAndFkType(entityId, entityType);
+
+        NotifyEntity entityToSave = null;
+
+        if (oldEntity.isPresent()) {
+            log.info("Overriding old {} with new notification {}", oldEntity, notifyResponse);
+            entityToSave = oldEntity.get();
+            entityToSave.setChatId(notifyResponse.getChatId());
+            entityToSave.setMessageId(notifyResponse.getMessageId());
+            entityToSave.setMessageType(messageType);
+        } else {
+            entityToSave = NotifyEntity.builder()
+                    .chatId(notifyResponse.getChatId())
+                    .messageId(notifyResponse.getMessageId())
+                    .messageType(messageType)
+                    .fkId(entityId)
+                    .fkType(entityType)
+                    .build();
         }
 
-        log.debug("Found following communication: {}", result);
-
-        return Optional.of(result.get().getMessageId());
+        entityToSave = repository.save(entityToSave);
+        log.info("Communication saved: {}", entityToSave);
     }
 
     @Override
-    public void saveCommunication(NotifyEntity entity) {
-        if (entity.getCreateDate() == null) {
-            entity.setCreateDate(LocalDateTime.now());
-        }
-        entity = repository.save(entity);
-        log.info("New communication saved: {}", entity);
+    public Optional<NotifyEntity> findNotification(Long entityId, EntityType entityType) {
+        return repository.findByFkIdAndFkType(entityId, entityType);
     }
 
 }

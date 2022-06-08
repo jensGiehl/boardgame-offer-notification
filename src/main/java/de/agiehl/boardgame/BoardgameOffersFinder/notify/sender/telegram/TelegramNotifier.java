@@ -4,6 +4,7 @@ import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.Notifier;
 import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.NotifyResponse;
 import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.text.TelegramTextFormatter;
 import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.text.TextFormatter;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.notify.NotifyEntity;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,30 @@ public class TelegramNotifier implements Notifier {
         URI uri = getBaseUrlWithPath("/sendPhoto")
                 .queryParam("photo", imageUrl)
                 .queryParam("caption", caption)
+                .encode(StandardCharsets.UTF_8)
+                .build().toUri();
+
+        return sendRequest(uri);
+    }
+
+    @Override
+    public NotifyResponse sendText(NotifyEntity oldNotifyEntity, String textToSend) {
+        URI uri = getBaseUrlWithPath("/editMessageText")
+                .queryParam("text", textToSend)
+                .queryParam("message_id", oldNotifyEntity.getMessageId())
+                .queryParam("chat_id", oldNotifyEntity.getChatId())
+                .encode(StandardCharsets.UTF_8)
+                .build().toUri();
+
+        return sendRequest(uri);
+    }
+
+    @Override
+    public NotifyResponse sendImage(NotifyEntity oldNotifyEntity, String imgUrl, String textToSend) {
+        URI uri = getBaseUrlWithPath("/editMessageCaption")
+                .queryParam("caption", textToSend)
+                .queryParam("message_id", oldNotifyEntity.getMessageId())
+                .queryParam("chat_id", oldNotifyEntity.getChatId())
                 .encode(StandardCharsets.UTF_8)
                 .build().toUri();
 

@@ -1,5 +1,8 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.text;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class TelegramTextFormatter implements TextFormatter {
 
     private final StringBuilder str = new StringBuilder();
@@ -29,8 +32,17 @@ public class TelegramTextFormatter implements TextFormatter {
     }
 
     @Override
-    public TextFormatter keyValue(String key, String value) {
-        return normal(key).normal(": ").bold(value);
+    public TextFormatter keyValue(String key, Object value) {
+        if (value == null) {
+            log.warn("Value for key {} is NULL", key);
+            return this;
+        }
+        return normal(key).normal(": ").bold(value.toString());
+    }
+
+    @Override
+    public TextFormatter keyValueLink(String key, Object value, String link) {
+        return normal(key).normal(": ").link(value.toString(), link);
     }
 
     @Override

@@ -1,18 +1,15 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.web.bgg;
 
-import de.agiehl.bgg.BggDataFetcher;
-import de.agiehl.bgg.config.BggConfig;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
-@Configuration
+
+@Data
+@Component
+@ConfigurationProperties(prefix = "bgg")
 public class BoardgameGeekConfig {
 
-    @Bean
-    public BggDataFetcher getBggDataFetcher() {
-        BggConfig bggConfig = BggConfig.getDefault();
-
-        return new BggDataFetcher(bggConfig);
-    }
+    private String baseurl;
 
 }

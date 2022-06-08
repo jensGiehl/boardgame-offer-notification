@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 @AllArgsConstructor
 @Slf4j
@@ -15,19 +18,29 @@ public class MilanPersistencePersistenceServiceImpl implements MilanPersistenceP
     private MilanMapper mapper;
 
     @Override
-    public boolean saveIfNewOrModified(MilanDto dto) {
+    public Optional<MilanEntity> saveIfNewOrModified(MilanDto dto) {
         MilanEntity oldEntity = repository.findFirstByUrlOrderByCreateDateDesc(dto.getUrl());
         MilanEntity newEntity = mapper.toEntity(dto);
 
         if (newEntity.equals(oldEntity)) {
             log.debug("No changes for {}", dto);
-            return false;
+            return Optional.empty();
         }
 
         newEntity = repository.save(newEntity);
         log.info("New entity saved: {}", newEntity);
 
-        return true;
+        return Optional.of(newEntity);
+    }
+
+    @Override
+    public List<MilanEntity> findAllWithoutBggRating() {
+        return repository.findAllWithoutBggRating();
+    }
+
+    @Override
+    public List<MilanEntity> finAllWithoutComparisonPrice() {
+        return repository.findAllWithoutComparisonPrice();
     }
 
 }

@@ -2,16 +2,26 @@ package de.agiehl.boardgame.BoardgameOffersFinder.notify.milan;
 
 import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.Notifier;
 import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.NotifyResponse;
+import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.text.TextFormatter;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.bgg.BggEntity;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.bgg.BggPersistenceService;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote.BrettspielAngebotePriceRepository;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote.BrettspielAngebotePriceService;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote.ComparisonPriceEntity;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.milan.MilanEntity;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.notify.NotifyEntity;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.notify.NotifyPersistenceService;
-import de.agiehl.boardgame.BoardgameOffersFinder.web.milan.MilanDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.Optional;
+
+import static de.agiehl.boardgame.BoardgameOffersFinder.persistent.EntityType.MILAN;
 
 @Service
 @Slf4j
@@ -24,29 +34,94 @@ public class MilanNotifyImpl implements MilanNotify {
 
     private NotifyPersistenceService notifyPersistenceService;
 
-    @Override
-    public void notify(MilanDto dto) {
-        String priceText = messageSource.getMessage("price", null, LocaleContextHolder.getLocale());
-        String stockText = messageSource.getMessage("stock", null, LocaleContextHolder.getLocale());
-        String linkText = messageSource.getMessage("milan.link", null, LocaleContextHolder.getLocale());
+    private BggPersistenceService bggPersistenceService;
 
-        String textToSend = notifier.getTextFormatter()
-                .bold(dto.getName())
-                .newLine()
-                .keyValue(priceText, dto.getPrice())
-                .newLine()
-                .keyValue(stockText, dto.getStockText())
-                .newLine()
-                .newLine()
-                .link(linkText, dto.getUrl())
-                .getText();
+    private BrettspielAngebotePriceService brettspielAngebotePriceService;
+
+    @Override
+    public void notify(MilanEntity entity) {
+        String textToSend = getMessage(entity);
 
         NotifyResponse response;
-        if (Objects.isNull(dto.getImgUrl())) {
-            response = notifier.sendText(textToSend);
+        Optional<NotifyEntity> oldNotification = notifyPersistenceService.findNotification(entity.getId(), MILAN);
+        if(oldNotification.isPresent()) {
+            NotifyEntity oldNotifyEntity = oldNotification.get();
+            log.info("Updating message {}", oldNotifyEntity);
+
+            if (Objects.isNull(entity.getImgUrl())) {
+                response = notifier.sendText(oldNotifyEntity, textToSend);
+            } else {
+                response = notifier.sendImage(oldNotifyEntity, entity.getImgUrl(), textToSend);
+            }
         } else {
-            response = notifier.sendImage(dto.getImgUrl(), textToSend);
+            NotifyEntity.MessageType messageType;
+            if (Objects.isNull(entity.getImgUrl())) {
+                response = notifier.sendText(textToSend);
+                messageType = NotifyEntity.MessageType.TEXT;
+            } else {
+                response = notifier.sendImage(entity.getImgUrl(), textToSend);
+                messageType = NotifyEntity.MessageType.IMAGE;
+            }
+
+            notifyPersistenceService.saveCommunication(response, entity.getId(), MILAN, messageType);
         }
     }
+
+    private String getMessage(MilanEntity entity) {
+        String priceText = messageSource.getMessage("price", null, LocaleContextHolder.getLocale());
+        String stockText = messageSource.getMessage("stock", null, LocaleContextHolder.getLocale());
+        String editNumberText = messageSource.getMessage("edit-number", null, LocaleContextHolder.getLocale());
+        String linkText = messageSource.getMessage("milan.link", null, LocaleContextHolder.getLocale());
+        String bggRatingText = messageSource.getMessage("bgg-rating", null, LocaleContextHolder.getLocale());
+        String bggWishText = messageSource.getMessage("bgg-wish", null, LocaleContextHolder.getLocale());
+        String bggWantText = messageSource.getMessage("bgg-want", null, LocaleContextHolder.getLocale());
+        String comparisonPriceText = messageSource.getMessage("comparison-price", null, LocaleContextHolder.getLocale());
+
+        Optional<BggEntity> bggEntity = bggPersistenceService.findByFkIdAndFkType(entity.getId(), MILAN);
+
+        TextFormatter textFormatter = notifier.getTextFormatter()
+                .bold(entity.getName())
+                .newLine()
+                .keyValue(priceText, entity.getPrice())
+                .newLine()
+                .keyValue(stockText, entity.getStockText());
+
+        if (bggEntity.isPresent()) {
+            BggEntity bgg = bggEntity.get();
+            if (bgg.getBggRating() != null) {
+                textFormatter.newLine()
+                        .newLine()
+                        .keyValueLink(bggRatingText, bgg.getBggRating(), bgg.getBggLink());
+            }
+
+            if (bgg.getWishing() != null) {
+                textFormatter.newLine().keyValue(bggWishText, bgg.getWishing());
+            }
+
+            if (bgg.getWanting() != null) {
+                textFormatter.newLine().keyValue(bggWantText, bgg.getWanting());
+            }
+        }
+
+        Optional<ComparisonPriceEntity> comparisonPrice = brettspielAngebotePriceService.findByFkIdAndFkType(entity.getId(), MILAN);
+        if (comparisonPrice.isPresent()) {
+            ComparisonPriceEntity priceEntity = comparisonPrice.get();
+            if (priceEntity.getPrice() != null && !priceEntity.getPrice().isBlank()) {
+                textFormatter.newLine()
+                        .newLine()
+                        .keyValueLink(comparisonPriceText, priceEntity.getPrice(), priceEntity.getUrl());
+            }
+        }
+
+        textFormatter
+                .newLine()
+                .newLine()
+                .keyValue(editNumberText, RandomStringUtils.randomAlphanumeric(4)) // Telegram wants an update of the message...
+                .newLine()
+                .link(linkText, entity.getUrl());
+
+        return textFormatter.getText();
+    }
+
 
 }

@@ -32,4 +32,10 @@ public class BrettspielAngeboteConfig {
     private String providerSelector;
 
     private String bggSelector;
+
+    private String bggLinkUrl;
+
+    private String bggLinkPriceSelector;
+
+    private String bggLinkCurrencySelector;
 }

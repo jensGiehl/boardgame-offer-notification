@@ -9,8 +9,12 @@ public class BoardgameGeekDto {
 
     private Long id;
 
-    private String type;
+    private String bggLink;
 
-    private String name;
+    private String rating;
+
+    private Integer wanting;
+
+    private Integer wishing;
 
 }

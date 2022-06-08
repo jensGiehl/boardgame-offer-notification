@@ -37,4 +37,5 @@ public class MilanEntity {
     @Builder.Default
     private LocalDateTime createDate = LocalDateTime.now();
 
+
 }

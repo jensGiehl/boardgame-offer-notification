@@ -1,4 +1,4 @@
-package de.agiehl.boardgame.BoardgameOffersFinder.persistent.notify;
+package de.agiehl.boardgame.BoardgameOffersFinder.persistent.bgg;
 
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.EntityType;
 import lombok.Builder;
@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-@Table("MESSAGES")
-public class NotifyEntity {
+@Table("BGG")
+public class BggEntity {
 
     @Id
     @EqualsAndHashCode.Exclude
@@ -28,13 +28,14 @@ public class NotifyEntity {
 
     private EntityType fkType;
 
-    private Long messageId;
+    private Long bggId;
 
-    private Long chatId;
+    private String bggRating;
 
-    private MessageType messageType;
+    private Integer wanting;
 
-    public enum MessageType {
-        IMAGE, TEXT
-    }
+    private Integer wishing;
+
+    private String bggLink;
+
 }

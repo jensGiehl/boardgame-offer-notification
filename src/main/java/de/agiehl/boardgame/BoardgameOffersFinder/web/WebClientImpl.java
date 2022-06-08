@@ -3,6 +3,7 @@ package de.agiehl.boardgame.BoardgameOffersFinder.web;
 import de.agiehl.boardgame.BoardgameOffersFinder.alert.AlertService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -25,7 +26,7 @@ public class WebClientImpl implements WebClient {
 
     @Override
     public Document loadDocumentFromUrl(String url) {
-        log.debug("Loading URL '{}'", url);
+        log.info("Loading URL '{}'", url);
 
         try {
             long startTime = System.currentTimeMillis();

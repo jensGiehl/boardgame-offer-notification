@@ -1,15 +1,20 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote;
 
 import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClient;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClientException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.DecimalFormat;
 import java.util.Optional;
 
 @Service
@@ -62,6 +67,28 @@ public class BrettspielAngebotePriceFinderImpl implements BrettspielAngebotePric
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<BrettspielAngeboteBggDto> getCurrentPriceForBggItem(Long id) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl(config.getBggLinkUrl())
+                .path("/" + id)
+                .encode(StandardCharsets.UTF_8)
+                .build()
+                .toUriString();
+
+        try {
+            Document document = webClient.loadDocumentFromUrl(url);
+            String price = webClient.selectFirstChildAndGetAttributeValue(document, config.getBggLinkPriceSelector(), "content");
+            String currency = webClient.selectFirstChildAndGetAttributeValue(document, config.getBggLinkCurrencySelector(), "content");
+            if (NumberUtils.isParsable(price)) {
+                price = String.format("%,.2f %s", Double.parseDouble(price), currency);
+            }
+            return Optional.of(BrettspielAngeboteBggDto.builder().currentPrice(price).url(url).build());
+        } catch (WebClientException e) {
+            return Optional.empty();
+        }
     }
 
 }

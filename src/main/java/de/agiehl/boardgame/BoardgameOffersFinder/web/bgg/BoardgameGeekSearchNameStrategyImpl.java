@@ -8,10 +8,10 @@ public class BoardgameGeekSearchNameStrategyImpl implements BoardgameGeekSearchN
     @Override
     public String getNameForSearch(String name) {
         if (name.contains("(")) {
-            return name.substring(0, name.indexOf('('));
+            name = name.substring(0, name.indexOf('('));
         }
 
-        return name;
+        return name.replaceAll("[^A-Za-z0-9 ]", "");
     }
 
 }

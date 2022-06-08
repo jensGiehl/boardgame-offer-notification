@@ -10,7 +10,9 @@ public interface TextFormatter {
 
     TextFormatter normal(String text);
 
-    TextFormatter keyValue(String key, String value);
+    TextFormatter keyValue(String key, Object value);
+
+    TextFormatter keyValueLink(String key, Object value, String link);
 
     TextFormatter newLine();
 

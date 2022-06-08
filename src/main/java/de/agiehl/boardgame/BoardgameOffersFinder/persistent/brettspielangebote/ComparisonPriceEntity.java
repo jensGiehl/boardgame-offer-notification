@@ -1,4 +1,4 @@
-package de.agiehl.boardgame.BoardgameOffersFinder.persistent.notify;
+package de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote;
 
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.EntityType;
 import lombok.Builder;
@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-@Table("MESSAGES")
-public class NotifyEntity {
+@Table("COMPARISON_PRICE")
+public class ComparisonPriceEntity {
 
     @Id
     @EqualsAndHashCode.Exclude
@@ -24,17 +24,11 @@ public class NotifyEntity {
     @Builder.Default
     private LocalDateTime createDate = LocalDateTime.now();
 
-    private Long fkId;
-
     private EntityType fkType;
 
-    private Long messageId;
+    private Long fkId;
 
-    private Long chatId;
+    private String price;
 
-    private MessageType messageType;
-
-    public enum MessageType {
-        IMAGE, TEXT
-    }
+    private String url;
 }

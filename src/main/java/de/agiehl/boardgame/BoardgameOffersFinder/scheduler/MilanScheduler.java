@@ -41,7 +41,7 @@ public class MilanScheduler {
 
     private final BrettspielAngebotePriceRepository angebotePriceRepository;
 
-    @Scheduled(fixedRateString = "${milan.fixedRate.in.milliseconds}")
+//    @Scheduled(fixedRateString = "${milan.fixedRate.in.milliseconds}")
     public void proccessMilan() {
         log.info("Process Milan Scheduler");
 

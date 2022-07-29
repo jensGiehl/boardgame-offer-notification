@@ -5,7 +5,6 @@ import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.NotifyResponse;
 import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.text.TextFormatter;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.bgg.BggEntity;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.bgg.BggPersistenceService;
-import de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote.BrettspielAngebotePriceRepository;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote.BrettspielAngebotePriceService;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote.ComparisonPriceEntity;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.milan.MilanEntity;
@@ -18,6 +17,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -27,6 +28,8 @@ import static de.agiehl.boardgame.BoardgameOffersFinder.persistent.EntityType.MI
 @Slf4j
 @AllArgsConstructor
 public class MilanNotifyImpl implements MilanNotify {
+
+    private static final String NON_NUMBER_REGEX = "[^\\d,.]";
 
     private Notifier notifier;
 
@@ -54,7 +57,31 @@ public class MilanNotifyImpl implements MilanNotify {
                 response = notifier.sendImage(oldNotifyEntity, entity.getImgUrl(), textToSend);
             }
         } else {
+            Optional<ComparisonPriceEntity> comparisonPrice = brettspielAngebotePriceService.findByFkIdAndFkType(entity.getId(), MILAN);
+            if (comparisonPrice.isEmpty() && LocalDateTime.now().isBefore(entity.getCreateDate().plusSeconds(30))) {
+                log.debug("No comparison price found. Still holding message.");
+                return;
+            }
+
+            if (comparisonPrice.isPresent()) {
+                String price = comparisonPrice.get().getPrice();
+                if (Objects.nonNull(price)) {
+                    try {
+                        Double comparisonPriceAsDouble = convertPrice(price);
+                        Double priceAsDouble = convertPrice(entity.getPrice());
+                        if (Double.compare(comparisonPriceAsDouble, priceAsDouble) < 0) {
+                            log.info("Comparison ({}) price is lower than current price: {}", comparisonPriceAsDouble, priceAsDouble);
+                            return;
+                        }
+
+                    } catch (Exception ex) {
+                        log.warn("Couldn't compare prices", ex);
+                    }
+                }
+            }
+
             NotifyEntity.MessageType messageType;
+
             if (Objects.isNull(entity.getImgUrl())) {
                 response = notifier.sendText(textToSend);
                 messageType = NotifyEntity.MessageType.TEXT;
@@ -65,6 +92,13 @@ public class MilanNotifyImpl implements MilanNotify {
 
             notifyPersistenceService.saveCommunication(response, entity.getId(), MILAN, messageType);
         }
+    }
+
+    private Double convertPrice(String priceStr) {
+        String price = priceStr.replaceAll(NON_NUMBER_REGEX, "")
+                .replace(',', '.');
+
+        return Double.parseDouble(price);
     }
 
     private String getMessage(MilanEntity entity) {
@@ -116,9 +150,10 @@ public class MilanNotifyImpl implements MilanNotify {
         textFormatter
                 .newLine()
                 .newLine()
-                .keyValue(editNumberText, RandomStringUtils.randomAlphanumeric(4)) // Telegram wants an update of the message...
+                .link(linkText, entity.getUrl())
                 .newLine()
-                .link(linkText, entity.getUrl());
+                .keyValue(editNumberText, RandomStringUtils.randomAlphanumeric(4)) // Telegram wants an update of the message...
+                ;
 
         return textFormatter.getText();
     }

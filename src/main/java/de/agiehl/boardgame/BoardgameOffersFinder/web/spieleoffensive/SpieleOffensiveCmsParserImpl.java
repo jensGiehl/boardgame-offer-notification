@@ -73,7 +73,7 @@ public class SpieleOffensiveCmsParserImpl implements SpieleOffensiveCmsParser {
             spieleOffensiveDto.ifPresent(result::add);
         }
 
-        return Collections.emptyList();
+        return result;
     }
 
     private Optional<SpieleOffensiveDto> processIfAbsent(Optional<SpieleOffensiveDto> lastResult,

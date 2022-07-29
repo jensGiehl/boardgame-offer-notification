@@ -8,12 +8,13 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class BrettspielAngeboteNewsPersistenceServiceImpl {
+public class BrettspielAngeboteNewsPersistenceServiceImpl implements BrettspielAngeboteNewsPersistenceService {
 
     private BrettspielAngeboteNewsMapper mapper;
 
     private BrettspielAngeboteNewsRepository repository;
 
+    @Override
     public boolean saveIfNewOrModified(BrettspielAngebotNewsDto dto) {
         BrettspielAngeboteNewsEntity oldEntity = repository.findFirstByUrlOrderByCreateDateDesc(dto.getUrl());
         BrettspielAngeboteNewsEntity newEntity = mapper.toEntity(dto);

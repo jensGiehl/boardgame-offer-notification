@@ -1,15 +1,13 @@
-package de.agiehl.boardgame.BoardgameOffersFinder.scheduler.config;
+package de.agiehl.boardgame.BoardgameOffersFinder.notify;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Data
-@ConfigurationProperties(prefix = "notify.scheduler")
+@ConfigurationProperties(prefix = "notify")
 @Component
-public class NotifierSchedulerConfig {
-
-    private long maxAge;
+public class NotifyConfig {
 
     private Boolean enable;
 

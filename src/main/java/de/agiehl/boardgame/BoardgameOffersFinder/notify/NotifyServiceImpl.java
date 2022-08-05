@@ -27,8 +27,14 @@ public class NotifyServiceImpl implements NotifyService {
 
     private PersistenceService persistenceService;
 
+    private NotifyConfig config;
+
     @Override
     public void notify(DataEntity entity) {
+        if (Boolean.FALSE.equals(config.getEnable())) {
+            return;
+        }
+
         String textToSend = getMessage(entity);
 
         if (hasNotTheCheapestPrice(entity)) {

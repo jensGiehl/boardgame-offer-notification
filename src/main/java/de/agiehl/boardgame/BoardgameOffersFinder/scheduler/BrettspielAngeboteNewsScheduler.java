@@ -25,7 +25,7 @@ public class BrettspielAngeboteNewsScheduler {
 
     private final BrettspielAngeboteNewsSchedulerConfig config;
 
-    @Scheduled(fixedRateString = "${brettspiel-angebote.fixedRate.in.milliseconds}")
+    @Scheduled(fixedRateString = "${brettspiel-angebote.news.fixedRate.in.milliseconds}")
     public void proccessNews() {
         if (Boolean.FALSE.equals(config.getEnable())) {
             return;

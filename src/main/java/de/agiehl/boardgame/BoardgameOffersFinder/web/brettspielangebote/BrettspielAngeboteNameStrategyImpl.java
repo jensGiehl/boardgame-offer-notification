@@ -1,9 +1,9 @@
-package de.agiehl.boardgame.BoardgameOffersFinder.web.bgg;
+package de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote;
 
 import org.springframework.stereotype.Component;
 
 @Component
-public class BoardgameGeekSearchNameStrategyImpl implements BoardgameGeekSearchNameStrategy {
+public class BrettspielAngeboteNameStrategyImpl implements BrettspielAngeboteNameStrategy {
 
     @Override
     public String getNameForSearch(String name) {
@@ -15,7 +15,7 @@ public class BoardgameGeekSearchNameStrategyImpl implements BoardgameGeekSearchN
             name = name.substring(0, name.indexOf('-'));
         }
 
-        return name.replaceAll("[^A-Za-z0-9 ]", "").trim();
+        return name.trim();
     }
 
 }

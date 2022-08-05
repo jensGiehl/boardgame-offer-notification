@@ -19,4 +19,6 @@ public class BrettspielAngeboteDto {
 
     private String bggRating;
 
+    private String url;
+
 }

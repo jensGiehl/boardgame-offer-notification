@@ -36,15 +36,21 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
         log.debug("Searching on BGG for {}", searchName);
         SearchQueryParameters queryParameters = SearchQueryParameters.builder()
                 .query(searchName)
-                .exact(false)
+                .exact(true)
                 .type(Type.BOARDGAME)
                 .build();
 
         SearchItems searchResult = bggDataFetcher.search(queryParameters);
         List<SearchItem> items = searchResult.getItem();
         if (Objects.isNull(items) || items.isEmpty()) {
-            log.debug("No result found for '{}'", name);
-            return Optional.empty();
+            log.debug("No result found for '{}' (exact search)", name);
+            queryParameters.setExact(false);
+            searchResult = bggDataFetcher.search(queryParameters);
+            items = searchResult.getItem();
+            if (Objects.isNull(items) || items.isEmpty()) {
+                log.debug("No result found for '{}'", name);
+                return Optional.empty();
+            }
         }
 
         log.debug("Found {} entries for '{}'", items.size(), name);

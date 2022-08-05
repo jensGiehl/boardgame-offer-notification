@@ -24,10 +24,19 @@ public class BrettspielAngebotePriceFinderImpl implements BrettspielAngebotePric
 
     private BrettspielAngeboteConfig config;
 
+    private BrettspielAngeboteNameStrategy nameStrategy;
+
     @Override
     public Optional<BrettspielAngeboteDto> getCurrentPriceFor(String name) {
+        name = nameStrategy.getNameForSearch(name);
+
         String url = config.getSearchUrl() + URLEncoder.encode(name, StandardCharsets.UTF_8);
         Document document = webClient.loadDocumentFromUrl(url);
+
+        if (!document.select(config.getNoResultsSelector()).isEmpty()) {
+            log.debug("No results found for {}", name);
+            return Optional.empty();
+        }
 
         Elements allResults = webClient.getElements(document, config.getResultTableSelector());
         for (Element resultRow : allResults) {
@@ -35,6 +44,8 @@ public class BrettspielAngebotePriceFinderImpl implements BrettspielAngebotePric
                     .replace(config.getPriceReplaceString(), "");
 
             String baName = webClient.getTextFromFirstElement(resultRow, config.getNameSelector());
+
+            String bestPriceUrl = webClient.selectFirstChildAndGetAttributeValue(resultRow, config.getUrlSelector(), "href");
 
             String bestPrice = webClient.getTextFromFirstElement(resultRow, config.getBestPriceSelector());
 
@@ -51,6 +62,7 @@ public class BrettspielAngebotePriceFinderImpl implements BrettspielAngebotePric
                     .provider(providerName)
                     .bggLink(bggLink)
                     .bggRating(bggRating)
+                    .url(bestPriceUrl)
                     .build();
 
             log.debug("Found {}", dto);

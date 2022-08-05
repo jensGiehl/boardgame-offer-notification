@@ -68,9 +68,9 @@ public class NotifyServiceImpl implements NotifyService {
     }
 
     private boolean hasNotTheCheapestPrice(DataEntity entity) {
-        if (entity.isEnableBestPrice() && Objects.nonNull(entity.getBestPrice())) {
+        if (Objects.nonNull(entity.getBestPrice()) && Objects.nonNull(entity.getPrice())) {
             try {
-                Double comparisonPriceAsDouble = convertPrice(entity.getPrice());
+                Double comparisonPriceAsDouble = convertPrice(entity.getBestPrice());
                 Double priceAsDouble = convertPrice(entity.getPrice());
                 if (Double.compare(comparisonPriceAsDouble, priceAsDouble) < 0) {
                     log.info("Comparison ({}) price is lower than current price: {}", comparisonPriceAsDouble, priceAsDouble);
@@ -94,7 +94,6 @@ public class NotifyServiceImpl implements NotifyService {
     private String getMessage(DataEntity entity) {
         String priceText = messageSource.getMessage("price", null, LocaleContextHolder.getLocale());
         String stockText = messageSource.getMessage("stock", null, LocaleContextHolder.getLocale());
-        String editNumberText = messageSource.getMessage("edit-number", null, LocaleContextHolder.getLocale());
         String linkText = messageSource.getMessage(entity.getCrawlerName().name().toLowerCase() + ".link-text", null, LocaleContextHolder.getLocale());
         String bggRatingText = messageSource.getMessage("bgg-rating", null, LocaleContextHolder.getLocale());
         String bggWishText = messageSource.getMessage("bgg-wish", null, LocaleContextHolder.getLocale());
@@ -116,13 +115,20 @@ public class NotifyServiceImpl implements NotifyService {
                     .newLine();
         }
 
+        if (Objects.nonNull(entity.getBestPrice())) {
+            textFormatter
+                    .keyValueLink(comparisonPriceText, entity.getBestPrice(), entity.getBestPriceUrl())
+                    .newLine();
+        }
+
         if (Objects.nonNull(entity.getStockText())) {
             textFormatter.keyValue(stockText, entity.getStockText())
                     .newLine();
         }
 
-        if (entity.isEnableBgg() && Objects.nonNull(entity.getBggId())) {
+        if (Objects.nonNull(entity.getBggId())) {
             textFormatter
+                    .newLine()
                     .keyValueLink(bggRatingText, entity.getBggRating(), entity.getBggLink())
                     .newLine()
                     .keyValue(bggWishText, entity.getBggWishing())
@@ -131,18 +137,11 @@ public class NotifyServiceImpl implements NotifyService {
                     .newLine();
         }
 
-        if (entity.isEnableBestPrice() && Objects.nonNull(entity.getBestPrice())) {
-            textFormatter
-                    .keyValueLink(comparisonPriceText, entity.getBestPrice(), entity.getBestPriceUrl())
-                    .newLine();
-        }
 
         textFormatter
                 .newLine()
                 .newLine()
                 .link(linkText, entity.getUrl());
-//                .newLine()
-//                .keyValue(editNumberText, RandomStringUtils.randomAlphanumeric(4)) // Telegram wants an update of the message...
 
         return textFormatter.getText();
     }

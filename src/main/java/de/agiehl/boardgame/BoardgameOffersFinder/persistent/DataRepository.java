@@ -12,7 +12,10 @@ public interface DataRepository extends CrudRepository<DataEntity, Long> {
 
     Optional<DataEntity> findByUrlOrderByCreateDateDesc(String url);
 
-    //    List<DataEntity> findByEnableNotificationIsTrueAndCreateDateLessThan(LocalDateTime maxWaitTime);
     List<DataEntity> findByEnableNotificationTrueAndCreateDateLessThan(LocalDateTime maxWaitTime);
+
+    List<DataEntity> findByEnableBggTrue();
+
+    List<DataEntity> findByEnableBestPriceTrue();
 
 }

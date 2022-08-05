@@ -38,4 +38,8 @@ public class BrettspielAngeboteConfig {
     private String bggLinkPriceSelector;
 
     private String bggLinkCurrencySelector;
+
+    private String urlSelector;
+
+    private String noResultsSelector;
 }

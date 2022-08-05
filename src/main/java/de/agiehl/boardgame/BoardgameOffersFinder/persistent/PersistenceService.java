@@ -15,4 +15,8 @@ public interface PersistenceService {
     DataEntity save(DataEntity entity);
 
     List<DataEntity> findOldEntities(long getEntitiesWhichAreOlderThanSeconds);
+
+    List<DataEntity> findPendingBggItems();
+
+    List<DataEntity> findPendingBestPriceItems();
 }

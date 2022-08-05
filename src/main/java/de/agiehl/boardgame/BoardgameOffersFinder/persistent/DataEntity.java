@@ -42,13 +42,7 @@ public class DataEntity {
     @Column("STOCK")
     private String stockText;
 
-    @Column("ORIGIN_STOCK")
-    private String originStockText;
-
     private String validUntil;
-
-    @Builder.Default
-    private int failCount = 0;
 
     @Builder.Default
     private boolean enableNotification = true;
@@ -57,7 +51,7 @@ public class DataEntity {
 
     private String chatId;
 
-    private Integer bggId;
+    private Long bggId;
 
     private String bggRating;
 

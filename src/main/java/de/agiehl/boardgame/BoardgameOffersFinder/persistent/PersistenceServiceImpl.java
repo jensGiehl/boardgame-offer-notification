@@ -54,4 +54,14 @@ public class PersistenceServiceImpl implements PersistenceService {
         return repository.findByEnableNotificationTrueAndCreateDateLessThan(maxAge);
     }
 
+    @Override
+    public List<DataEntity> findPendingBggItems() {
+        return repository.findByEnableBggTrue();
+    }
+
+    @Override
+    public List<DataEntity> findPendingBestPriceItems() {
+        return repository.findByEnableBestPriceTrue();
+    }
+
 }

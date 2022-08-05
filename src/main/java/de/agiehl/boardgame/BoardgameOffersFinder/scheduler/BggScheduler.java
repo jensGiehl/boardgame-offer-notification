@@ -51,7 +51,7 @@ public class BggScheduler {
         }
 
         entity.setEnableBgg(false);
-        persistenceService.save(entity);
+        persistenceService.saveBggInformation(entity);
     }
 
 }

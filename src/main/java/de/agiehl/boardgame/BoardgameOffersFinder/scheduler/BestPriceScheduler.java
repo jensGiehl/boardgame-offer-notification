@@ -60,7 +60,7 @@ public class BestPriceScheduler {
         }
 
         entity.setEnableBestPrice(false);
-        persistenceService.save(entity);
+        persistenceService.saveBestPriceInformation(entity);
     }
 
 }

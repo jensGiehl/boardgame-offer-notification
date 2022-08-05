@@ -19,4 +19,10 @@ public interface PersistenceService {
     List<DataEntity> findPendingBggItems();
 
     List<DataEntity> findPendingBestPriceItems();
+
+    void saveBggInformation(DataEntity entity);
+
+    void saveBestPriceInformation(DataEntity entity);
+
+    void saveNotificationInformation(DataEntity entity);
 }

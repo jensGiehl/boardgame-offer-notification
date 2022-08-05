@@ -64,4 +64,46 @@ public class PersistenceServiceImpl implements PersistenceService {
         return repository.findByEnableBestPriceTrue();
     }
 
+    @Override
+    public void saveBggInformation(DataEntity entity) {
+        repository.updateBggInformation(
+                LocalDateTime.now(),
+                entity.getBggId(),
+                entity.getBggRating(),
+                entity.getBggWishing(),
+                entity.getBggWanting(),
+                entity.getBggLink(),
+                entity.isEnableBgg(),
+                entity.getId()
+        );
+
+        log.info("BGG Information saved: {}", entity);
+    }
+
+    @Override
+    public void saveBestPriceInformation(DataEntity entity) {
+        repository.updateBestPriceInformation(
+                LocalDateTime.now(),
+                entity.getBestPrice(),
+                entity.getBestPriceUrl(),
+                entity.isEnableBestPrice(),
+                entity.getId()
+        );
+
+        log.info("Best price Information saved: {}", entity);
+    }
+
+    @Override
+    public void saveNotificationInformation(DataEntity entity) {
+        repository.updateNotificationInformation(
+                LocalDateTime.now(),
+                entity.getMessageId(),
+                entity.getChatId(),
+                entity.isEnableNotification(),
+                entity.getId()
+        );
+
+        log.info("Notification Information saved: {}", entity);
+    }
+
 }

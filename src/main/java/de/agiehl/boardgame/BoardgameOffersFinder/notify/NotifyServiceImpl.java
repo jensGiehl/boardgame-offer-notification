@@ -69,7 +69,7 @@ public class NotifyServiceImpl implements NotifyService {
             entity.setChatId(String.valueOf(notifyResponse.getChatId()));
             entity.setMessageId(String.valueOf(notifyResponse.getMessageId()));
             entity.setEnableNotification(false);
-            persistenceService.save(entity);
+            persistenceService.saveNotificationInformation(entity);
         }
     }
 

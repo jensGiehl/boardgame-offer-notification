@@ -1,12 +1,12 @@
 create table data (
-	id IDENTITY PRIMARY KEY auto_increment,
-	url varchar(2000) not null,
-	img_url varchar(2000) null,
-	name varchar(500) not null,
-	description text null,
-	price varchar(20) null,
-	stock varchar(150) null,
-	valid_until varchar(100) null,
+	ID IDENTITY PRIMARY KEY auto_increment,
+	URL varchar(2000) not null,
+	IMG_URL varchar(2000) null,
+	NAME varchar(500) not null,
+	DESCRIPTION text null,
+	PRICE varchar(20) null,
+	STOCK varchar(150) null,
+	VALID_UNTIL varchar(100) null,
 	ENABLE_NOTIFICATION char(5) not null,
 	MESSAGE_ID varchar(150) null,
 	CHAT_ID varchar(150) null,
@@ -20,6 +20,6 @@ create table data (
     BEST_PRICE_URL varchar(2000) null,
     ENABLE_BEST_PRICE char(5) not null,
     CRAWLER_NAME varchar(50) not null,
-	create_date timestamp not null,
-	update_date timestamp not null
+	CREATE_DATE timestamp not null,
+	UPDATE_DATE timestamp not null
 );

@@ -51,11 +51,17 @@ public class MilanServiceImpl implements MilanService {
             image = image.replace(config.getProductImgReplaceStr(), "");
         }
 
+        if (image.isEmpty()) {
+            image = null;
+        } else {
+            image = config.getImageUrlPrefix() + image;
+        }
+
         return MilanDto.builder()
                 .url(link)
                 .stockText(delivery)
                 .name(title)
-                .imgUrl(config.getImageUrlPrefix() + image)
+                .imgUrl(image)
                 .price(price)
                 .build();
     }

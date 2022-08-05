@@ -17,6 +17,10 @@ public class SpieleOffensiveDto {
 
     private LocalDate validUntil;
 
+    private String stock;
+
     private String url;
+
+    private String description;
 
 }

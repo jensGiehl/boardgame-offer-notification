@@ -33,7 +33,8 @@ public class OfferServiceImpl implements OfferService {
                 .price(productPrice)
                 .name(productTitle)
                 .validUntil(productEndDate)
-                .imgUrl(productImage)
+                .imgUrl(dto.getRootUrl() + productImage)
+                .url(dto.getLink())
                 .build();
     }
 
@@ -58,7 +59,7 @@ public class OfferServiceImpl implements OfferService {
 
     @Override
     public boolean isOffer(SpieleOffensiveCmsElementDto dto) {
-        return dto.getImageFrameUrl().startsWith(config.getImagePrefix());
+        return dto.getImageFrameUrl().contains(config.getImagePrefix());
     }
 
 }

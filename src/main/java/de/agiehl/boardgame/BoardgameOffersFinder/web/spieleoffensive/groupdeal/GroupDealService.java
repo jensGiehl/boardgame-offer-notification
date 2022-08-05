@@ -1,5 +1,6 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.groupdeal;
 
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClient;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.FurtherProcessing;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveCmsElementDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveDto;
@@ -8,8 +9,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @Qualifier("groupdeal")
@@ -21,21 +20,22 @@ public class GroupDealService implements FurtherProcessing {
 
     private final OfferService offerService;
 
-    @Override
-    public Optional<SpieleOffensiveDto> process(SpieleOffensiveCmsElementDto dto) {
-        if (!isProcessable(dto)) {
-            log.debug("{} is not an group deal", dto);
-            return Optional.empty();
-        }
+    private final WebClient webClient;
 
+    @Override
+    public SpieleOffensiveDto process(SpieleOffensiveCmsElementDto dto) {
         if (offerService.isOffer(dto)) {
-            return Optional.ofNullable(offerService.getOfferData(dto));
+            return offerService.getOfferData(dto);
         } else {
             log.debug("'{}' is not an offer, so no information can be extract from CMS element", dto.getLink());
-            return Optional.ofNullable(SpieleOffensiveDto.builder()
+
+            String name = webClient.getAttribute(dto.getImageElement(), "alt");
+
+            return SpieleOffensiveDto.builder()
                     .url(dto.getLink())
                     .imgUrl(dto.getImageFrameUrl())
-                    .build());
+                    .name(name)
+                    .build();
         }
     }
 

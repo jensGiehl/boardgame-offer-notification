@@ -11,4 +11,8 @@ public class ProductHighlightConfig {
 
     private String linkMustContain;
 
+    private String priceSelector;
+
+    private String nameSelector;
+
 }

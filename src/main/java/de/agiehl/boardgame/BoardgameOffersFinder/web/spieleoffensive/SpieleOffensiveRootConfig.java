@@ -21,4 +21,6 @@ public class SpieleOffensiveRootConfig {
 
     private List<String> ignoreUrl;
 
+    private List<String> ignoreNowInStock;
+
 }

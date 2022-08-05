@@ -11,8 +11,6 @@ import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 @Qualifier("schmiede")
 @AllArgsConstructor
@@ -26,29 +24,26 @@ public class SpieleschmiedeService implements FurtherProcessing {
     private final AlertService alertService;
 
     @Override
-    public Optional<SpieleOffensiveDto> process(SpieleOffensiveCmsElementDto dto) {
-        if (!isProcessable(dto)) {
-            return Optional.empty();
-        }
-
-        Document spieleschmiedePage = webClient.loadDocumentFromRelativePath(config.getRootUrl(), dto.getLink());
+    public SpieleOffensiveDto process(SpieleOffensiveCmsElementDto dto) {
+        Document spieleschmiedePage = webClient.loadDocumentFromUrl(dto.getLink());
 
         String contentUrl = webClient.selectFirstChildAndGetAttributeValue(spieleschmiedePage, config.getDetailPageSelector(), "src");
         if (contentUrl.isEmpty()) {
             log.error("Couldn't get content iframe for '{}'", dto.getLink());
-            return Optional.empty();
+            return SpieleOffensiveDto.builder()
+                    .url(dto.getLink())
+                    .imgUrl(dto.getImageFrameUrl())
+                    .build();
         }
 
         Document contentPage = webClient.loadDocumentFromUrl(contentUrl);
         String title = webClient.getTextFromFirstElement(contentPage, config.getProductTitleSelector());
 
-        SpieleOffensiveDto spieleschmiedeDto = SpieleOffensiveDto.builder()
+        return SpieleOffensiveDto.builder()
                 .imgUrl(dto.getImageFrameUrl())
                 .url(dto.getLink())
                 .name(title)
                 .build();
-
-        return Optional.of(spieleschmiedeDto);
     }
 
     @Override

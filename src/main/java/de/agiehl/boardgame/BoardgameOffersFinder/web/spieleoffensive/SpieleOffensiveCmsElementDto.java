@@ -10,8 +10,12 @@ public class SpieleOffensiveCmsElementDto {
 
     private Element element;
 
+    private Element imageElement;
+
     private String link;
 
     private String imageFrameUrl;
+
+    private String rootUrl;
 
 }

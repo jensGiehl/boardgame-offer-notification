@@ -22,4 +22,6 @@ public interface WebClient {
     String selectFirstChildAndGetAttributeValue(Element element, String selector, String attributeName);
 
     Elements getElements(Element element, String selector);
+
+    Element getFirstElement(Element element, String selector);
 }

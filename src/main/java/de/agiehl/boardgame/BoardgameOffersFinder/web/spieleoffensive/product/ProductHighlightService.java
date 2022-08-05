@@ -1,16 +1,15 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.product;
 
-import de.agiehl.boardgame.BoardgameOffersFinder.alert.AlertService;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClient;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.FurtherProcessing;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveCmsElementDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.offer.OfferService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @Qualifier("product")
@@ -22,26 +21,27 @@ public class ProductHighlightService  implements FurtherProcessing {
 
     private final OfferService offerService;
 
-    private final AlertService alertService;
+    private final WebClient webClient;
 
     @Override
-    public Optional<SpieleOffensiveDto> process(SpieleOffensiveCmsElementDto dto) {
-        if (!isProcessable(dto)) {
-            return Optional.empty();
-        }
-
-        SpieleOffensiveDto.SpieleOffensiveDtoBuilder builder = SpieleOffensiveDto.builder()
-                .url(dto.getLink());
-
+    public SpieleOffensiveDto process(SpieleOffensiveCmsElementDto dto) {
         if (offerService.isOffer(dto)) {
-            return Optional.ofNullable(offerService.getOfferData(dto));
+            return offerService.getOfferData(dto);
         } else {
-            builder.imgUrl(dto.getImageFrameUrl());
-            // TODO
-            alertService.sendAlert("TODO: Parse Path " + dto.getLink());
-        }
+            String description = webClient.getAttribute(dto.getImageElement(), "alt");
 
-        return Optional.of(builder.build());
+            Document productPage = webClient.loadDocumentFromUrl(dto.getLink());
+            String name = webClient.getTextFromFirstElement(productPage, config.getNameSelector());
+            String price = webClient.getTextFromFirstElement(productPage, config.getPriceSelector());
+
+            return SpieleOffensiveDto.builder()
+                    .url(dto.getLink())
+                    .imgUrl(dto.getImageFrameUrl())
+                    .description(description)
+                    .name(name)
+                    .price(price)
+                    .build();
+        }
     }
 
     @Override

@@ -139,4 +139,9 @@ public class WebClientImpl implements WebClient {
         return selectedElements;
     }
 
+    @Override
+    public Element getFirstElement(Element element, String selector) {
+        return getElements(element, selector).first();
+    }
+
 }

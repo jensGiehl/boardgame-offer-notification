@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -57,59 +59,75 @@ public class SpieleOffensiveCmsParserImpl implements SpieleOffensiveCmsParser {
         for (Element cmsElement : cmsElements) {
             String link = webClient.getAttribute(cmsElement, "href");
             String imageFrameUrl = webClient.selectFirstChildAndGetAttributeValue(cmsElement, config.getCmsImageFrameSelector(), "src");
+            Element imageElement = webClient.getFirstElement(cmsElement, config.getCmsImageFrameSelector());
 
             if (shouldBeIgnored(link, imageFrameUrl)) {
                 continue;
+            }
+
+            if (!link.startsWith("http")) {
+                link = config.getUrl() + link;
+            }
+
+            if (!imageFrameUrl.startsWith("http")) {
+                imageFrameUrl = config.getUrl() + imageFrameUrl;
             }
 
             SpieleOffensiveCmsElementDto dto = SpieleOffensiveCmsElementDto.builder()
                     .element(cmsElement)
                     .link(link)
                     .imageFrameUrl(imageFrameUrl)
+                    .imageElement(imageElement)
+                    .rootUrl(config.getUrl())
                     .build();
 
-            Optional<SpieleOffensiveDto> spieleOffensiveDto = process(link, dto);
-            spieleOffensiveDto.ifPresent(result::add);
+            process(link, dto).ifPresent(result::add);
         }
 
-        return result;
+        return result.stream()
+                .filter(this::isNotAInStockMessage)
+                .collect(Collectors.toList());
     }
 
-    private Optional<SpieleOffensiveDto> processIfAbsent(Optional<SpieleOffensiveDto> lastResult,
-                                                         SpieleOffensiveCmsElementDto dto,
-                                                         FurtherProcessing processor) {
-        if (lastResult.isPresent()) {
-            String message = String.format("CMS Element (URL: '%s') is multiple processed!", dto.getLink());
-            alertService.sendAlert(message);
+    private boolean isNotAInStockMessage(SpieleOffensiveDto dto) {
+        String description = dto.getDescription();
+        if (Objects.isNull(description)) {
+            return true;
         }
 
-        return processor.process(dto);
+        for (String text : config.getIgnoreNowInStock()) {
+            if (description.startsWith(text)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private Optional<SpieleOffensiveDto> process(String link, SpieleOffensiveCmsElementDto dto) {
-        Optional<SpieleOffensiveDto> spieleOffensiveDto = Optional.empty();
+        SpieleOffensiveDto spieleOffensiveDto = null;
 
         if (groupDealService.isProcessable(dto)) {
-            spieleOffensiveDto = processIfAbsent(spieleOffensiveDto, dto, groupDealService);
+            spieleOffensiveDto = groupDealService.process(dto);
         }
 
         if (priceActionService.isProcessable(dto)) {
-            spieleOffensiveDto = processIfAbsent(spieleOffensiveDto, dto, priceActionService);
+            spieleOffensiveDto = priceActionService.process(dto);
         }
 
         if (productHighlightService.isProcessable(dto)) {
-            spieleOffensiveDto = processIfAbsent(spieleOffensiveDto, dto, productHighlightService);
+            spieleOffensiveDto = productHighlightService.process(dto);
         }
 
         if (schmiedeService.isProcessable(dto)) {
-            spieleOffensiveDto = processIfAbsent(spieleOffensiveDto, dto, schmiedeService);
+            spieleOffensiveDto = schmiedeService.process(dto);
         }
 
-        if (spieleOffensiveDto.isEmpty()) {
+        if (spieleOffensiveDto == null) {
             alertService.sendAlert(String.format("Unknown CMS type. URL '%s'", link));
         }
 
-        return spieleOffensiveDto;
+        return Optional.ofNullable(spieleOffensiveDto);
     }
 
     private boolean shouldBeIgnored(String link, String imgUrl) {

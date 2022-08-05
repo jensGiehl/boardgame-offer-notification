@@ -1,8 +1,10 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.scheduler;
 
-import de.agiehl.boardgame.BoardgameOffersFinder.notify.brettspielangebote.BrettspielAngeboteNewsNotity;
-import de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote.BrettspielAngeboteNewsPersistenceService;
-import de.agiehl.boardgame.BoardgameOffersFinder.persistent.brettspielangebote.BrettspielAngeboteNewsRepository;
+import de.agiehl.boardgame.BoardgameOffersFinder.notify.NotifyService;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.CrawlerName;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.DataEntity;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.PersistenceService;
+import de.agiehl.boardgame.BoardgameOffersFinder.scheduler.config.BrettspielAngeboteNewsSchedulerConfig;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngebotNewsDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngebotNewsService;
 import lombok.AllArgsConstructor;
@@ -15,21 +17,41 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class BrettspielAngeboteNewsScheduler {
 
-    private final BrettspielAngeboteNewsNotity notity;
+    private final NotifyService notity;
 
     private final BrettspielAngebotNewsService newsService;
 
-    private final BrettspielAngeboteNewsPersistenceService persistenceService;
+    private final PersistenceService persistenceService;
 
+    private final BrettspielAngeboteNewsSchedulerConfig config;
 
-//    @Scheduled(fixedRateString = "${brettspiel-angebote.fixedRate.in.milliseconds}")
+    @Scheduled(fixedRateString = "${brettspiel-angebote.fixedRate.in.milliseconds}")
     public void proccessNews() {
-        log.info("Process Brettspiel-Angebote News");
+        if (Boolean.FALSE.equals(config.getEnable())) {
+            return;
+        }
+        log.debug("Process Brettspiel-Angebote News");
 
         newsService.getNews().stream()
-                .filter(persistenceService::saveIfNewOrModified)
-                .forEach(notity::notify);
+                .filter(dto -> persistenceService.urlNotExists(dto.getUrl()))
+                .map(this::toEntity)
+                .forEach(this::saveAndNotify);
 
+    }
+
+    private void saveAndNotify(DataEntity entity) {
+        DataEntity savedEntity = persistenceService.save(entity);
+
+        notity.notify(savedEntity);
+    }
+
+    private DataEntity toEntity(BrettspielAngebotNewsDto dto) {
+        return DataEntity.builder()
+                .crawlerName(CrawlerName.BRETTSPIELANGEBOTE_NEWS)
+                .description(dto.getDescription())
+                .name(dto.getTitle())
+                .url(dto.getUrl())
+                .build();
     }
 
 }

@@ -3,7 +3,6 @@ package de.agiehl.boardgame.BoardgameOffersFinder.web;
 import de.agiehl.boardgame.BoardgameOffersFinder.alert.AlertService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,10 +29,11 @@ public class WebClientImpl implements WebClient {
 
         try {
             long startTime = System.currentTimeMillis();
+            int timeoutInMillis = Long.valueOf(config.getTimeout().toMillis()).intValue();
 
             Document document = Jsoup.connect(url)
                     .userAgent(config.getUserAgent())
-                    .timeout(Long.valueOf(config.getTimeout().toMillis()).intValue())
+                    .timeout(timeoutInMillis)
                     .followRedirects(true)
                     .header("Accept-Language", config.getAcceptLanguage())
                     .get();

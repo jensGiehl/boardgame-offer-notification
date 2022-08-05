@@ -25,4 +25,6 @@ public class MilanConfig {
 
     private String productImgSelector;
 
+    private String productImgReplaceStr;
+
 }

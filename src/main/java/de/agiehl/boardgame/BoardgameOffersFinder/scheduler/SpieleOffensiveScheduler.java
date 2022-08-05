@@ -1,7 +1,7 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.scheduler;
 
-import de.agiehl.boardgame.BoardgameOffersFinder.notify.spieleoffensive.SpieleOffensiveNotify;
-import de.agiehl.boardgame.BoardgameOffersFinder.persistent.spieleoffensive.SpieleOffensivePersistenceService;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.PersistenceService;
+import de.agiehl.boardgame.BoardgameOffersFinder.scheduler.config.SpieleOffensiveSchedulerConfig;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveCmsParser;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,16 +15,17 @@ public class SpieleOffensiveScheduler {
 
     private final SpieleOffensiveCmsParser spieleOffensiveCmsParser;
 
-    private final SpieleOffensivePersistenceService persistenceService;
+    private final SpieleOffensiveSchedulerConfig config;
 
-    private final SpieleOffensiveNotify notify;
+    private final PersistenceService persistenceService;
 
     @Scheduled(fixedRateString = "${spiele-offensive.fixedRate.in.milliseconds}")
-    public void proccessSo() {
-        log.info("Process Spiele-Offensive Scheduler");
+    public void proccessSpieleOffensive() {
+        if (Boolean.FALSE.equals(config.getEnable())) {
+            return;
+        }
 
-        spieleOffensiveCmsParser.parseRootPage().stream()
-                .filter(persistenceService::saveIfNewOrModified)
-                .forEach(notify::notify);
+        log.debug("Process Spiele-Offensive Scheduler");
+
     }
 }

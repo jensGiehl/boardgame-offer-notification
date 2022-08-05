@@ -47,11 +47,15 @@ public class MilanServiceImpl implements MilanService {
         String link = webClient.selectFirstChildAndGetAttributeValue(product, config.getProductLinkSelector(), "href");
         String image = webClient.selectFirstChildAndGetAttributeValue(product, config.getProductImgSelector(), "src");
 
+        if (image.contains(config.getProductImgReplaceStr())) {
+            image = image.replace(config.getProductImgReplaceStr(), "");
+        }
+
         return MilanDto.builder()
                 .url(link)
                 .stockText(delivery)
                 .name(title)
-                .imgUrl(config.getImageUrlPrefix() +  image)
+                .imgUrl(config.getImageUrlPrefix() + image)
                 .price(price)
                 .build();
     }

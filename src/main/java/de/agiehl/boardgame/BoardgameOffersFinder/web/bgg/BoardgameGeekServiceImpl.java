@@ -8,8 +8,6 @@ import de.agiehl.bgg.model.thing.Item;
 import de.agiehl.bgg.service.common.Type;
 import de.agiehl.bgg.service.search.SearchQueryParameters;
 import de.agiehl.bgg.service.thing.ThingQueryParameters;
-import de.agiehl.boardgame.BoardgameOffersFinder.persistent.EntityType;
-import de.agiehl.boardgame.BoardgameOffersFinder.persistent.bgg.BggEntity;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;

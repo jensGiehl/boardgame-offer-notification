@@ -42,7 +42,7 @@ public class SpieleschmiedeService implements FurtherProcessing {
         Document contentPage = webClient.loadDocumentFromUrl(contentUrl);
         String title = webClient.getTextFromFirstElement(contentPage, config.getProductTitleSelector());
 
-        SpieleschmiedeDto spieleschmiedeDto = SpieleschmiedeDto.builder()
+        SpieleOffensiveDto spieleschmiedeDto = SpieleOffensiveDto.builder()
                 .imgUrl(dto.getImageFrameUrl())
                 .url(dto.getLink())
                 .name(title)

@@ -3,7 +3,6 @@ package de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.groupdeal;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.FurtherProcessing;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveCmsElementDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveDto;
-import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.offer.OfferDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.offer.OfferService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,23 +28,15 @@ public class GroupDealService implements FurtherProcessing {
             return Optional.empty();
         }
 
-        GroupDealDto.GroupDealDtoBuilder builder = GroupDealDto.builder()
-                .url(dto.getLink());
         if (offerService.isOffer(dto)) {
-            OfferDto offerData = offerService.getOfferData(dto);
-
-            builder
-                    .imgUrl(offerData.getImageUrl())
-                    .name(offerData.getTitle())
-                    .price(offerData.getPrice())
-                    .validUntil(offerData.getValidUntil());
+            return Optional.ofNullable(offerService.getOfferData(dto));
         } else {
             log.debug("'{}' is not an offer, so no information can be extract from CMS element", dto.getLink());
-            builder.imgUrl(dto.getImageFrameUrl());
+            return Optional.ofNullable(SpieleOffensiveDto.builder()
+                    .url(dto.getLink())
+                    .imgUrl(dto.getImageFrameUrl())
+                    .build());
         }
-
-        GroupDealDto groupDealDto = builder.build();
-        return Optional.of(groupDealDto);
     }
 
     @Override

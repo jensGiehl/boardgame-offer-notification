@@ -4,7 +4,6 @@ import de.agiehl.boardgame.BoardgameOffersFinder.alert.AlertService;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.FurtherProcessing;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveCmsElementDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveDto;
-import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.offer.OfferDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.offer.OfferService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,16 +30,11 @@ public class ProductHighlightService  implements FurtherProcessing {
             return Optional.empty();
         }
 
-        SpieleOffensiveProductDto.SpieleOffensiveProductDtoBuilder builder = SpieleOffensiveProductDto.builder()
+        SpieleOffensiveDto.SpieleOffensiveDtoBuilder builder = SpieleOffensiveDto.builder()
                 .url(dto.getLink());
 
         if (offerService.isOffer(dto)) {
-            OfferDto offerData = offerService.getOfferData(dto);
-
-            builder.imgUrl(offerData.getImageUrl())
-                    .endDate(offerData.getValidUntil())
-                    .name(offerData.getTitle())
-                    .price(offerData.getPrice());
+            return Optional.ofNullable(offerService.getOfferData(dto));
         } else {
             builder.imgUrl(dto.getImageFrameUrl());
             // TODO

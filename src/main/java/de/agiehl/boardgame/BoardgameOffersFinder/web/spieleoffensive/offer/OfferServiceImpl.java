@@ -2,6 +2,7 @@ package de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.offer;
 
 import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClient;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveCmsElementDto;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive.SpieleOffensiveDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Element;
@@ -21,18 +22,18 @@ public class OfferServiceImpl implements OfferService {
     private final WebClient webClient;
 
     @Override
-    public OfferDto getOfferData(SpieleOffensiveCmsElementDto dto) {
+    public SpieleOffensiveDto getOfferData(SpieleOffensiveCmsElementDto dto) {
         Element element = dto.getElement();
         String productImage = webClient.selectFirstChildAndGetAttributeValue(element, config.getProductImageSelector(), "src");
         String productPrice = getPrice(element);
         String productTitle = webClient.getTextFromFirstElement(element, config.getProductTitleSelector());
         LocalDate productEndDate = getEndDate(element);
 
-        return OfferDto.builder()
+        return SpieleOffensiveDto.builder()
                 .price(productPrice)
-                .title(productTitle)
+                .name(productTitle)
                 .validUntil(productEndDate)
-                .imageUrl(productImage)
+                .imgUrl(productImage)
                 .build();
     }
 

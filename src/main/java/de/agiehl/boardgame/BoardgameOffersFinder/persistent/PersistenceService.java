@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PersistenceService {
-    boolean exists(DataEntity entity);
-
-    boolean exists(String url);
+    boolean urlExists(String url);
 
     boolean notExists(DataEntity entity);
 

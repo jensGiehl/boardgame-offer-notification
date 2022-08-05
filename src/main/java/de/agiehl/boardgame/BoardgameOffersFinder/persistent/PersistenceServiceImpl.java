@@ -16,12 +16,7 @@ public class PersistenceServiceImpl implements PersistenceService {
     private final DataRepository repository;
 
     @Override
-    public boolean exists(DataEntity entity) {
-        return exists(entity.getUrl());
-    }
-
-    @Override
-    public boolean exists(String url) {
+    public boolean urlExists(String url) {
         return repository.findByUrlOrderByCreateDateDesc(url).isPresent();
     }
 
@@ -32,7 +27,7 @@ public class PersistenceServiceImpl implements PersistenceService {
 
     @Override
     public boolean urlNotExists(String url) {
-        return !exists(url);
+        return !urlExists(url);
     }
 
     @Override

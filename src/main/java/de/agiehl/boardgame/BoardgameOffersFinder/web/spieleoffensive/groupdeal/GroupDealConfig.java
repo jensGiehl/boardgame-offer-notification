@@ -10,4 +10,11 @@ import org.springframework.stereotype.Component;
 public class GroupDealConfig {
 
     private String linkMustContain;
+
+    private String priceSelector;
+
+    private String stockSelector;
+
+    private String nameSelector;
+
 }

@@ -1,6 +1,7 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.web.spieleoffensive;
 
 import de.agiehl.boardgame.BoardgameOffersFinder.alert.AlertService;
+import de.agiehl.boardgame.BoardgameOffersFinder.persistent.PersistenceService;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClient;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
@@ -34,13 +35,16 @@ public class SpieleOffensiveCmsParserImpl implements SpieleOffensiveCmsParser {
 
     private final FurtherProcessing productHighlightService;
 
+    private final PersistenceService persistenceService;
+
     public SpieleOffensiveCmsParserImpl(WebClient webClient,
                                         SpieleOffensiveRootConfig config,
                                         AlertService alertService,
                                         @Qualifier("priceAction") FurtherProcessing priceActionService,
                                         @Qualifier("schmiede") FurtherProcessing schmiedeService,
                                         @Qualifier("groupdeal") FurtherProcessing groupDealService,
-                                        @Qualifier("product") FurtherProcessing productHighlightService) {
+                                        @Qualifier("product") FurtherProcessing productHighlightService,
+                                        PersistenceService persistenceService) {
         this.webClient = webClient;
         this.config = config;
         this.alertService = alertService;
@@ -48,6 +52,7 @@ public class SpieleOffensiveCmsParserImpl implements SpieleOffensiveCmsParser {
         this.schmiedeService = schmiedeService;
         this.groupDealService = groupDealService;
         this.productHighlightService = productHighlightService;
+        this.persistenceService = persistenceService;
     }
 
     @Override
@@ -71,6 +76,11 @@ public class SpieleOffensiveCmsParserImpl implements SpieleOffensiveCmsParser {
 
             if (!imageFrameUrl.startsWith("http")) {
                 imageFrameUrl = config.getUrl() + imageFrameUrl;
+            }
+
+            if (persistenceService.urlExists(link)) {
+                log.debug("Skipping {} because it already exists", link);
+                continue;
             }
 
             SpieleOffensiveCmsElementDto dto = SpieleOffensiveCmsElementDto.builder()

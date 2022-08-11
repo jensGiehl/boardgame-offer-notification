@@ -86,7 +86,8 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
 
         SearchItems searchResult = bggDataFetcher.search(queryParameters);
 
-        log.debug("Found {} results for '{}'", searchResult.getItem().size(), searchName);
+        int found = searchResult.getItem() != null ? searchResult.getItem().size() : 0;
+        log.debug("Found {} results for '{}'", found, searchName);
 
         return searchResult.getItem();
     }

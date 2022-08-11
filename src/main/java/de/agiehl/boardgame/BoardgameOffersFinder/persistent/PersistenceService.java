@@ -14,7 +14,7 @@ public interface PersistenceService {
 
     DataEntity save(DataEntity entity);
 
-    List<DataEntity> findOldEntities(long getEntitiesWhichAreOlderThanSeconds);
+    List<DataEntity> findOldEntities(long minAgeInSeconds);
 
     List<DataEntity> findPendingBggItems();
 
@@ -25,4 +25,6 @@ public interface PersistenceService {
     void saveBestPriceInformation(DataEntity entity);
 
     void saveNotificationInformation(DataEntity entity);
+
+    void increaseNotificationFailCount(DataEntity entity);
 }

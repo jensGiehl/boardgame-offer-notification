@@ -12,4 +12,12 @@ public class BoardgameGeekConfig {
 
     private String baseurl;
 
+    private Integer maxRetries;
+
+    private Integer connectionTimeoutInSeconds;
+
+    private Integer readTimeoutInSeconds;
+
+    private Integer retryDelayInSeconds;
+
 }

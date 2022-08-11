@@ -11,4 +11,6 @@ public class NotifyConfig {
 
     private Boolean enable;
 
+    private Integer maxFailCount;
+
 }

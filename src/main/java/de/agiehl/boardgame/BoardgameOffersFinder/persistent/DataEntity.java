@@ -22,10 +22,12 @@ public class DataEntity {
 
     @EqualsAndHashCode.Exclude
     @Builder.Default
+    @ToString.Exclude
     private LocalDateTime createDate = LocalDateTime.now();
 
     @EqualsAndHashCode.Exclude
     @Builder.Default
+    @ToString.Exclude
     private LocalDateTime updateDate = LocalDateTime.now();
 
     private String url;
@@ -70,5 +72,11 @@ public class DataEntity {
     private boolean enableBestPrice;
 
     private CrawlerName crawlerName;
+
+    private int notificationFailCount;
+
+    private int bggFailCount;
+
+    private int bestPriceFailCount;
 
 }

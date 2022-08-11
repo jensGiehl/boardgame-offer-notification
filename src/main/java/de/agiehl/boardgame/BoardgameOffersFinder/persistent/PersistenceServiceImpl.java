@@ -46,10 +46,10 @@ public class PersistenceServiceImpl implements PersistenceService {
     }
 
     @Override
-    public List<DataEntity> findOldEntities(long getEntitiesWhichAreOlderThanSeconds) {
+    public List<DataEntity> findOldEntities(long minAgeInSeconds) {
         LocalDateTime maxAge = LocalDateTime
                 .now()
-                .minusSeconds(getEntitiesWhichAreOlderThanSeconds);
+                .minusSeconds(minAgeInSeconds);
 
         return repository.findByEnableNotificationTrueAndCreateDateLessThan(maxAge);
     }
@@ -104,6 +104,16 @@ public class PersistenceServiceImpl implements PersistenceService {
         );
 
         log.info("Notification Information saved: {}", entity);
+    }
+
+    @Override
+    public void increaseNotificationFailCount(DataEntity entity) {
+        repository.findById(entity.getId()).ifPresent(currentEntity -> {
+            int newFailCount = currentEntity.getNotificationFailCount() + 1;
+
+            repository.updateNotificationFailCount(newFailCount, entity.getId());
+            log.warn("Setting notification fail count for {} to {}", entity, newFailCount);
+        });
     }
 
 }

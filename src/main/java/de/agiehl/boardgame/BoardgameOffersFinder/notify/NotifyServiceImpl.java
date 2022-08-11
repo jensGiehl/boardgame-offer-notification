@@ -35,14 +35,41 @@ public class NotifyServiceImpl implements NotifyService {
             return;
         }
 
-        String textToSend = getMessage(entity);
-
-        if (hasNotTheCheapestPrice(entity)) {
-            entity.setEnableNotification(false);
-            persistenceService.save(entity);
+        if (entity.getNotificationFailCount() > config.getMaxFailCount()) {
+            disableNotificationForEntity(entity);
             return;
         }
 
+        if (hasNotTheCheapestPrice(entity)) {
+            disableNotificationForEntity(entity);
+            return;
+        }
+
+        NotifyResponse notifyResponse = null;
+
+        try {
+//            notifyResponse = sendNotification(entity); // FIXME
+        } catch (Exception ex) {
+            log.warn("Couldn't send notification", ex);
+        }
+
+        if (Objects.nonNull(notifyResponse)) {
+            entity.setChatId(String.valueOf(notifyResponse.getChatId()));
+            entity.setMessageId(String.valueOf(notifyResponse.getMessageId()));
+            entity.setEnableNotification(false);
+            persistenceService.saveNotificationInformation(entity);
+        } else {
+            persistenceService.increaseNotificationFailCount(entity);
+        }
+    }
+
+    private void disableNotificationForEntity(DataEntity entity) {
+        entity.setEnableNotification(false);
+        persistenceService.saveNotificationInformation(entity);
+    }
+
+    private NotifyResponse sendNotification(DataEntity entity) {
+        String textToSend = getMessage(entity);
         boolean hasImage = Objects.nonNull(entity.getImageUrl());
 
         NotifyResponse notifyResponse;
@@ -64,17 +91,11 @@ public class NotifyServiceImpl implements NotifyService {
                 notifyResponse = notifier.sendText(textToSend);
             }
         }
-
-        if (Objects.nonNull(notifyResponse)) {
-            entity.setChatId(String.valueOf(notifyResponse.getChatId()));
-            entity.setMessageId(String.valueOf(notifyResponse.getMessageId()));
-            entity.setEnableNotification(false);
-            persistenceService.saveNotificationInformation(entity);
-        }
+        return notifyResponse;
     }
 
     private boolean hasNotTheCheapestPrice(DataEntity entity) {
-        if (Objects.nonNull(entity.getBestPrice()) && Objects.nonNull(entity.getPrice())) {
+        if (isPricePresent(entity)) {
             try {
                 Double comparisonPriceAsDouble = convertPrice(entity.getBestPrice());
                 Double priceAsDouble = convertPrice(entity.getPrice());
@@ -88,6 +109,13 @@ public class NotifyServiceImpl implements NotifyService {
         }
 
         return false;
+    }
+
+    private boolean isPricePresent(DataEntity entity) {
+        return Objects.nonNull(entity.getBestPrice()) &&
+                !entity.getBestPrice().isBlank() &&
+                Objects.nonNull(entity.getPrice()) &&
+                !entity.getPrice().isBlank();
     }
 
     private Double convertPrice(String priceStr) {

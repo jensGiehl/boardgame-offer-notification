@@ -50,4 +50,8 @@ public interface DataRepository extends CrudRepository<DataEntity, Long> {
                               @Param("id") Long id
     );
 
+    @Modifying
+    @Query("update DATA set NOTIFICATION_FAIL_COUNT = :failCount WHERE id = :id")
+    void updateNotificationFailCount(@Param("failCount") int failCount, @Param("id") Long id);
+
 }

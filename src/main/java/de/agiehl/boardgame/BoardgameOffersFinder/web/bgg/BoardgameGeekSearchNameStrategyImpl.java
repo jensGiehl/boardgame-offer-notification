@@ -11,6 +11,8 @@ public class BoardgameGeekSearchNameStrategyImpl implements BoardgameGeekSearchN
             name = name.substring(0, name.indexOf('('));
         }
 
+        name = name.replace('-', ' ');
+
         return name.trim();
     }
 

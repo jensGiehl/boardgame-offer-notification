@@ -11,11 +11,7 @@ public class BoardgameGeekSearchNameStrategyImpl implements BoardgameGeekSearchN
             name = name.substring(0, name.indexOf('('));
         }
 
-        if (name.contains("-")) {
-            name = name.substring(0, name.indexOf('-'));
-        }
-
-        return name.replaceAll("[^A-Za-z0-9 ]", "").trim();
+        return name.trim();
     }
 
 }

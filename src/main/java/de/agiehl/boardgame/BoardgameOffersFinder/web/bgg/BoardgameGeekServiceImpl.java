@@ -1,6 +1,7 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.web.bgg;
 
 import de.agiehl.bgg.BggDataFetcher;
+import de.agiehl.bgg.httpclient.BggHttpClientException;
 import de.agiehl.bgg.model.common.Rating;
 import de.agiehl.bgg.model.search.SearchItem;
 import de.agiehl.bgg.model.search.SearchItems;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,29 +34,34 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
 
     @Override
     public Optional<BoardgameGeekSearchDto> searchForBoardgame(String name) {
-        String searchName = nameStrategy.getNameForSearch(name);
-        log.debug("Searching on BGG for {}", searchName);
-        SearchQueryParameters queryParameters = SearchQueryParameters.builder()
-                .query(searchName)
-                .exact(true)
-                .type(Type.BOARDGAME)
-                .build();
+        List<SearchItem> searchResult = Collections.emptyList();
+        try {
+            search(name, true);
 
-        SearchItems searchResult = bggDataFetcher.search(queryParameters);
-        List<SearchItem> items = searchResult.getItem();
-        if (Objects.isNull(items) || items.isEmpty()) {
-            log.debug("No result found for '{}' (exact search)", name);
-            queryParameters.setExact(false);
-            searchResult = bggDataFetcher.search(queryParameters);
-            items = searchResult.getItem();
-            if (Objects.isNull(items) || items.isEmpty()) {
-                log.debug("No result found for '{}'", name);
-                return Optional.empty();
+            if (nothingFound(searchResult)) {
+                searchResult = search(name, false);
+
+                if (nothingFound((searchResult))) {
+                    String searchName = nameStrategy.getNameForSearch(name);
+                    searchResult = search(searchName, true);
+
+                    if (nothingFound((searchResult))) {
+                        searchResult = search(searchName, false);
+                    }
+                }
             }
+        } catch (BggHttpClientException ex) {
+            log.warn(String.format("Exception while searching for '%s'", name), ex);
+            // TODO
+            return Optional.empty();
         }
 
-        log.debug("Found {} entries for '{}'", items.size(), name);
-        SearchItem bestMatchingResult = items.get(0);
+        if (nothingFound((searchResult))) {
+            return Optional.empty();
+        }
+
+        log.debug("Found {} entries for '{}'", searchResult.size(), name);
+        SearchItem bestMatchingResult = searchResult.get(0);
 
         return Optional.of(
                 BoardgameGeekSearchDto.builder()
@@ -62,6 +69,26 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
                         .name(bestMatchingResult.getName().getValue())
                         .type(bestMatchingResult.getType())
                         .build());
+    }
+
+    private boolean nothingFound(List<SearchItem> searchResult) {
+        return Objects.isNull(searchResult) || searchResult.isEmpty();
+    }
+
+    protected List<SearchItem> search(String searchName, boolean exact) {
+        SearchQueryParameters queryParameters = SearchQueryParameters.builder()
+                .query(searchName)
+                .exact(exact)
+                .type(Type.BOARDGAME)
+                .build();
+
+        log.info("Searching on BGG for '{}' (exact?: {})", queryParameters, exact);
+
+        SearchItems searchResult = bggDataFetcher.search(queryParameters);
+
+        log.debug("Found {} results for '{}'", searchResult.getItem().size(), searchName);
+
+        return searchResult.getItem();
     }
 
     @Override

@@ -48,7 +48,7 @@ public class NotifyServiceImpl implements NotifyService {
         NotifyResponse notifyResponse = null;
 
         try {
-//            notifyResponse = sendNotification(entity); // FIXME
+            notifyResponse = sendNotification(entity);
         } catch (Exception ex) {
             log.warn("Couldn't send notification", ex);
         }

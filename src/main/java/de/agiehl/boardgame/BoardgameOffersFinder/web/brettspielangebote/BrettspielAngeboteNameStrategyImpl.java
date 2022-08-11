@@ -11,9 +11,7 @@ public class BrettspielAngeboteNameStrategyImpl implements BrettspielAngeboteNam
             name = name.substring(0, name.indexOf('('));
         }
 
-        if (name.contains("-")) {
-            name = name.substring(0, name.indexOf('-'));
-        }
+        name = name.replace('-', ' ');
 
         return name.trim();
     }

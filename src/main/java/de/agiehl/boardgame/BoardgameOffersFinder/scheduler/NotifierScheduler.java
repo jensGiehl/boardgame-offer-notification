@@ -33,7 +33,7 @@ public class NotifierScheduler {
         List<DataEntity> timeoutEntities = persistenceService.findOldEntities(config.getMaxAge());
 
         if (!timeoutEntities.isEmpty()) {
-            log.info("Found {} old entities", timeoutEntities.size());
+            log.debug("Found {} old entities", timeoutEntities.size());
         }
 
         timeoutEntities.forEach(notifier::notify);

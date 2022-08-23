@@ -11,4 +11,6 @@ public class BestPriceSchedulerConfig {
 
     private Boolean enable;
 
+    private Integer maxFailCount;
+
 }

@@ -13,4 +13,14 @@ public class BoardgameGeekSearchDto {
 
     private String name;
 
+    private SearchStatus searchStatus;
+
+    private Integer nameCounter;
+
+    public static enum SearchStatus {
+        FINISHED,
+        NOT_FOUND,
+        ERROR
+    }
+
 }

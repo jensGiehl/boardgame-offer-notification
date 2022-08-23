@@ -2,6 +2,8 @@ package de.agiehl.boardgame.BoardgameOffersFinder.web.bgg;
 
 import de.agiehl.bgg.BggDataFetcher;
 import de.agiehl.bgg.httpclient.BggHttpClientException;
+import de.agiehl.bgg.model.common.Rank;
+import de.agiehl.bgg.model.common.Ranks;
 import de.agiehl.bgg.model.common.Rating;
 import de.agiehl.bgg.model.search.SearchItem;
 import de.agiehl.bgg.model.search.SearchItems;
@@ -9,6 +11,7 @@ import de.agiehl.bgg.model.thing.Item;
 import de.agiehl.bgg.service.common.Type;
 import de.agiehl.bgg.service.search.SearchQueryParameters;
 import de.agiehl.bgg.service.thing.ThingQueryParameters;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebResult;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -19,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -33,42 +35,77 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
     private final BoardgameGeekConfig config;
 
     @Override
-    public Optional<BoardgameGeekSearchDto> searchForBoardgame(String name) {
+    public WebResult<BoardgameGeekSearchDto> searchForBoardgame(String name, Integer nameCounter) {
         List<SearchItem> searchResult = Collections.emptyList();
+
+        if (nameCounter == null) {
+            nameCounter = 0;
+        }
+
         try {
-            search(name, true);
+            // Exact search with full name
+            if (nameCounter == 0) {
+                searchResult = search(name, true);
+                if (nothingFound(searchResult)) {
+                    nameCounter++;
+                }
+            }
 
-            if (nothingFound(searchResult)) {
+            // Non-exact search with full name
+            if (nameCounter == 1) {
                 searchResult = search(name, false);
+                if (nothingFound(searchResult)) {
+                    nameCounter++;
+                }
+            }
 
-                if (nothingFound((searchResult))) {
-                    String searchName = nameStrategy.getNameForSearch(name);
+            if (nameCounter >= 2) {
+                String searchName = nameStrategy.getNameForSearch(name);
+
+                // Exact search with extracted name
+                if (nameCounter == 2) {
                     searchResult = search(searchName, true);
+                    if (nothingFound(searchResult)) {
+                        nameCounter++;
+                    }
+                }
 
-                    if (nothingFound((searchResult))) {
-                        searchResult = search(searchName, false);
+                // Non-exact search with extracted name
+                if (nameCounter == 3) {
+                    searchResult = search(searchName, false);
+                    if (nothingFound(searchResult)) {
+                        nameCounter++;
                     }
                 }
             }
         } catch (BggHttpClientException ex) {
-            log.warn(String.format("Exception while searching for '%s'", name), ex);
-            // TODO
-            return Optional.empty();
+            log.warn("Exception while searching for '{}': {}", name, ex);
+            return WebResult.<BoardgameGeekSearchDto>builder()
+                    .status(WebResult.SearchStatus.ERROR)
+                    .errorCounter(nameCounter)
+                    .build();
         }
 
         if (nothingFound((searchResult))) {
-            return Optional.empty();
+            return WebResult.<BoardgameGeekSearchDto>builder()
+                    .status(WebResult.SearchStatus.NOT_FOUND)
+                    .build();
         }
 
         log.debug("Found {} entries for '{}'", searchResult.size(), name);
         SearchItem bestMatchingResult = searchResult.get(0);
 
-        return Optional.of(
-                BoardgameGeekSearchDto.builder()
-                        .id(bestMatchingResult.getId())
-                        .name(bestMatchingResult.getName().getValue())
-                        .type(bestMatchingResult.getType())
-                        .build());
+        BoardgameGeekSearchDto dto = BoardgameGeekSearchDto.builder()
+                .id(bestMatchingResult.getId())
+                .name(bestMatchingResult.getName().getValue())
+                .type(bestMatchingResult.getType())
+                .searchStatus(BoardgameGeekSearchDto.SearchStatus.FINISHED)
+                .build();
+
+        return WebResult.<BoardgameGeekSearchDto>builder()
+                .status(WebResult.SearchStatus.FOUND)
+                .result(dto)
+                .build();
     }
 
     private boolean nothingFound(List<SearchItem> searchResult) {
@@ -82,7 +119,7 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
                 .type(Type.BOARDGAME)
                 .build();
 
-        log.info("Searching on BGG for '{}' (exact?: {})", queryParameters, exact);
+        log.info("Searching on BGG for '{}'", queryParameters);
 
         SearchItems searchResult = bggDataFetcher.search(queryParameters);
 
@@ -93,7 +130,7 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
     }
 
     @Override
-    public Optional<BoardgameGeekDto> getBoardgameInfos(Long id) {
+    public WebResult<BoardgameGeekDto> getBoardgameInfos(Long id) {
         ThingQueryParameters queryParameters = ThingQueryParameters.builder()
                 .id(id)
                 .stats(true)
@@ -101,10 +138,21 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
                 .type(Type.BOARDGAMEEXPANSION)
                 .build();
 
-        List<Item> foundItems = bggDataFetcher.loadThings(queryParameters);
+        List<Item> foundItems;
+        try {
+            foundItems = bggDataFetcher.loadThings(queryParameters);
+        } catch (BggHttpClientException ex) {
+            log.warn("Exception while getting boardgame for ID '{}: {}", id, ex);
+            return WebResult.<BoardgameGeekDto>builder()
+                    .status(WebResult.SearchStatus.ERROR)
+                    .build();
+        }
+
         if (foundItems.isEmpty()) {
             log.error("No Boardgamegeek Infos found for ID {}", id);
-            return Optional.empty();
+            return WebResult.<BoardgameGeekDto>builder()
+                    .status(WebResult.SearchStatus.NOT_FOUND)
+                    .build();
         }
 
         if (foundItems.size() > 1) {
@@ -127,28 +175,63 @@ public class BoardgameGeekServiceImpl implements BoardgameGeekService {
             bggRating = String.format("%,.1f", Double.parseDouble(bggRating));
         }
 
+        Long bggRank = getBggRank(ratings);
+
         BoardgameGeekDto result = BoardgameGeekDto.builder()
                 .rating(bggRating)
+                .userRated(Long.valueOf(ratings.getUsersrated().getValue()))
                 .wanting(ratings.getWanting().getValue())
                 .wishing(ratings.getWishing().getValue())
                 .id(bggItem.getId())
                 .bggLink(bggUrl)
+                .bggRank(bggRank)
                 .build();
 
         log.info("Found Boardgamegeek Info {}", result);
 
 
-        return Optional.of(result);
+        return WebResult.<BoardgameGeekDto>builder()
+                .status(WebResult.SearchStatus.FOUND)
+                .result(result)
+                .build();
+    }
+
+    private Long getBggRank(Rating ratings) {
+        if (Objects.isNull(ratings)) {
+            return null;
+        }
+
+        Ranks ranks = ratings.getRanks();
+        if (Objects.isNull(ranks)) {
+            return null;
+        }
+
+        List<Rank> rankList = ranks.getRank();
+        if (Objects.isNull(rankList)) {
+            return null;
+        }
+
+        return rankList.stream()
+                .filter(r -> r.getName().equalsIgnoreCase("boardgame"))
+                .filter(r -> Objects.nonNull(r.getValue()))
+                .filter(r -> NumberUtils.isParsable(r.getValue()))
+                .map(r -> Long.parseLong(r.getValue()))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
-    public Optional<BoardgameGeekDto> searchAndGet(String name) {
-        Optional<BoardgameGeekSearchDto> searchResult = searchForBoardgame(name);
-        if (searchResult.isEmpty()) {
-            return Optional.empty();
+    public WebResult<BoardgameGeekDto> searchAndGet(String name, Integer nameCounter) {
+        WebResult<BoardgameGeekSearchDto> searchResult = searchForBoardgame(name, nameCounter);
+
+        if (searchResult.getStatus() != WebResult.SearchStatus.FOUND) {
+            return WebResult.<BoardgameGeekDto>builder()
+                    .status(searchResult.getStatus())
+                    .errorCounter(searchResult.getErrorCounter())
+                    .build();
         }
 
-        return  getBoardgameInfos(searchResult.get().getId());
+        return getBoardgameInfos(searchResult.getResult().getId());
     }
 
 }

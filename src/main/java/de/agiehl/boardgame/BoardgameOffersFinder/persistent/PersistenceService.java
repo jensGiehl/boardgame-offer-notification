@@ -27,4 +27,6 @@ public interface PersistenceService {
     void saveNotificationInformation(DataEntity entity);
 
     void increaseNotificationFailCount(DataEntity entity);
+
+    void increaseBestPriceFailCount(DataEntity entity);
 }

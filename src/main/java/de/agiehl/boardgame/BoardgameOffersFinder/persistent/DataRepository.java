@@ -31,15 +31,16 @@ public interface DataRepository extends CrudRepository<DataEntity, Long> {
     );
 
     @Modifying
-    @Query("update DATA set UPDATE_DATE = :date, BEST_PRICE = :bestPrice, BEST_PRICE_URL = :bestPriceUrl, ENABLE_BEST_PRICE = :enableBestPrice WHERE ID = :id")
+    @Query("update DATA set UPDATE_DATE = :date, BEST_PRICE = :bestPrice, BEST_PRICE_URL = :bestPriceUrl, ENABLE_BEST_PRICE = :enableBestPrice, BEST_PRICE_POSSIBLE = :bestPricePossible WHERE ID = :id")
     void updateBestPriceInformation(@Param("date") LocalDateTime updateDate,
                                     @Param("bestPrice") String bestPrice,
                                     @Param("bestPriceUrl") String bestPriceUrl,
                                     @Param("enableBestPrice") boolean enableBestPrice,
+                                    @Param("bestPricePossible") boolean bestPricePossible,
                                     @Param("id") Long id);
 
     @Modifying
-    @Query("update DATA set UPDATE_DATE = :date, BGG_ID = :bggId, BGG_RATING = :bggRating, BGG_WISHING = :bggWishing, BGG_WANTING = :bggWanting, BGG_LINK = :bggLink, ENABLE_BGG = :enableBgg WHERE ID = :id")
+    @Query("update DATA set UPDATE_DATE = :date, BGG_ID = :bggId, BGG_RATING = :bggRating, BGG_WISHING = :bggWishing, BGG_WANTING = :bggWanting, BGG_LINK = :bggLink, ENABLE_BGG = :enableBgg, BGG_USER_RATED = :bggUserRated, BGG_NAME_COUNTER = :bggNameCounter, BGG_FAIL_COUNT = :bggFailCount, BGG_RANK = :bggRank WHERE ID = :id")
     void updateBggInformation(@Param("date") LocalDateTime updateDate,
                               @Param("bggId") Long bggId,
                               @Param("bggRating") String bggRating,
@@ -47,11 +48,19 @@ public interface DataRepository extends CrudRepository<DataEntity, Long> {
                               @Param("bggWanting") Integer bggWanting,
                               @Param("bggLink") String bggLink,
                               @Param("enableBgg") boolean enableBgg,
+                              @Param("bggUserRated") Long bggUserRated,
+                              @Param("bggNameCounter") Integer bggNameCounter,
+                              @Param("bggFailCount") int bggFailCount,
+                              @Param("bggRank") Long bggRank,
                               @Param("id") Long id
     );
 
     @Modifying
     @Query("update DATA set NOTIFICATION_FAIL_COUNT = :failCount WHERE id = :id")
     void updateNotificationFailCount(@Param("failCount") int failCount, @Param("id") Long id);
+
+    @Modifying
+    @Query("update DATA set BEST_PRICE_FAIL_COUNT = :failCount WHERE id = :id")
+    void updateBestPriceFailCount(@Param("failCount") int failCount, @Param("id") Long id);
 
 }

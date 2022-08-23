@@ -15,10 +15,12 @@
 	<description>Finds board game deals and informs about them via Telegram</description>
 	<properties>
 		<java.version>17</java.version>
-		<jsoup.version>1.15.1</jsoup.version>
+		<jsoup.version>1.15.2</jsoup.version>
 		<bgg-fetcher.version>1.0.7</bgg-fetcher.version>
 		<assertj.version>3.22.0</assertj.version>
 		<commons-lang.version>3.12.0</commons-lang.version>
+		<spring-cloud-starter-circuitbreaker-resilience4j.version>2.1.3
+		</spring-cloud-starter-circuitbreaker-resilience4j.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -42,6 +44,11 @@
 			<groupId>de.agiehl.bgg</groupId>
 			<artifactId>BggDataFetcher</artifactId>
 			<version>${bgg-fetcher.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+			<version>${spring-cloud-starter-circuitbreaker-resilience4j.version}</version>
 		</dependency>
 
 		<dependency>
@@ -100,6 +107,7 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<executable>true</executable>
 				</configuration>
 			</plugin>
 			<plugin>

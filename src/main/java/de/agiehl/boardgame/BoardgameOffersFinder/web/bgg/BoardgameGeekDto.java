@@ -17,4 +17,8 @@ public class BoardgameGeekDto {
 
     private Integer wishing;
 
+    private Long userRated;
+
+    private Long bggRank;
+
 }

@@ -1,9 +1,9 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote;
 
-import java.util.Optional;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebResult;
 
 public interface BrettspielAngebotePriceFinder {
-    Optional<BrettspielAngeboteDto> getCurrentPriceFor(String name);
+    WebResult<BrettspielAngeboteDto> getCurrentPriceFor(String name);
 
-    Optional<BrettspielAngeboteBggDto> getCurrentPriceForBggItem(Long id);
+    WebResult<BrettspielAngeboteBggDto> getCurrentPriceForBggItem(Long id);
 }

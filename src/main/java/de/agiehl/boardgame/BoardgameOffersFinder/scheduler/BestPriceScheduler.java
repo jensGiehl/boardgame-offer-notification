@@ -4,16 +4,18 @@ import de.agiehl.boardgame.BoardgameOffersFinder.notify.NotifyService;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.DataEntity;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.PersistenceService;
 import de.agiehl.boardgame.BoardgameOffersFinder.scheduler.config.BestPriceSchedulerConfig;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebResult;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngeboteBggDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngeboteDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngebotePriceFinder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -28,6 +30,8 @@ public class BestPriceScheduler {
 
     private final BrettspielAngebotePriceFinder brettspielAngebotePriceFinder;
 
+    private final CircuitBreakerFactory circuitBreakerFactory;
+
     @Scheduled(fixedRateString = "${brettspiel-angebote.fixedRate.in.milliseconds}")
     public void fetchBggData() {
         if (Boolean.FALSE.equals(config.getEnable())) {
@@ -39,27 +43,52 @@ public class BestPriceScheduler {
     }
 
     private void fetchData(DataEntity entity) {
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create("bestPrice");
+
+        if (entity.getBestPriceFailCount() > config.getMaxFailCount()) {
+            log.warn("Max fail count exceeded for {}", entity);
+            entity.setEnableBestPrice(false);
+            persistenceService.saveBestPriceInformation(entity);
+            notity.notify(entity);
+            return;
+        }
+
         if (Objects.nonNull(entity.getBggId())) {
-            Optional<BrettspielAngeboteBggDto> currentPriceForBggItem = brettspielAngebotePriceFinder.getCurrentPriceForBggItem(entity.getBggId());
-            if (currentPriceForBggItem.isPresent()) {
-                BrettspielAngeboteBggDto brettspielAngeboteBggDto = currentPriceForBggItem.get();
+            WebResult<BrettspielAngeboteBggDto> currentPriceForBggItem = circuitBreaker.run(
+                    () -> brettspielAngebotePriceFinder.getCurrentPriceForBggItem(entity.getBggId()),
+                    throwable -> WebResult.<BrettspielAngeboteBggDto>builder().status(WebResult.SearchStatus.ERROR).build());
+
+            if (currentPriceForBggItem.getStatus() == WebResult.SearchStatus.FOUND) {
+                BrettspielAngeboteBggDto brettspielAngeboteBggDto = currentPriceForBggItem.getResult();
                 entity.setBestPrice(brettspielAngeboteBggDto.getCurrentPrice());
                 entity.setBestPriceUrl(brettspielAngeboteBggDto.getUrl());
+            }
 
+            if (currentPriceForBggItem.getStatus() == WebResult.SearchStatus.ERROR) {
+                persistenceService.increaseBestPriceFailCount(entity);
+            } else {
+                entity.setEnableBestPrice(false);
                 notity.notify(entity);
             }
         } else {
-            Optional<BrettspielAngeboteDto> currentPrice = brettspielAngebotePriceFinder.getCurrentPriceFor(entity.getName());
-            if (currentPrice.isPresent()) {
-                BrettspielAngeboteDto brettspielAngeboteDto = currentPrice.get();
+            WebResult<BrettspielAngeboteDto> currentPrice = circuitBreaker.run(
+                    () -> brettspielAngebotePriceFinder.getCurrentPriceFor(entity.getName()),
+                    throwable -> WebResult.<BrettspielAngeboteDto>builder().status(WebResult.SearchStatus.ERROR).build());
+
+            if (currentPrice.getStatus() == WebResult.SearchStatus.FOUND) {
+                BrettspielAngeboteDto brettspielAngeboteDto = currentPrice.getResult();
                 entity.setBestPrice(brettspielAngeboteDto.getCurrentPrice());
                 entity.setBestPriceUrl(brettspielAngeboteDto.getUrl());
+            }
 
+            if (currentPrice.getStatus() == WebResult.SearchStatus.ERROR) {
+                persistenceService.increaseBestPriceFailCount(entity);
+            } else {
+                entity.setEnableBestPrice(false);
                 notity.notify(entity);
             }
         }
 
-        entity.setEnableBestPrice(false);
         persistenceService.saveBestPriceInformation(entity);
     }
 

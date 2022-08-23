@@ -6,6 +6,8 @@ import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.NotifyUpdateInfor
 import de.agiehl.boardgame.BoardgameOffersFinder.notify.sender.text.TextFormatter;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.DataEntity;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.PersistenceService;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngeboteConfig;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngeboteNameStrategy;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -28,6 +30,10 @@ public class NotifyServiceImpl implements NotifyService {
     private PersistenceService persistenceService;
 
     private NotifyConfig config;
+
+    private BrettspielAngeboteConfig bestPriceConfig;
+
+    private BrettspielAngeboteNameStrategy bestPriceNameStrategy;
 
     @Override
     public void notify(DataEntity entity) {
@@ -133,6 +139,9 @@ public class NotifyServiceImpl implements NotifyService {
         String bggWishText = messageSource.getMessage("bgg-wish", null, LocaleContextHolder.getLocale());
         String bggWantText = messageSource.getMessage("bgg-want", null, LocaleContextHolder.getLocale());
         String comparisonPriceText = messageSource.getMessage("comparison-price", null, LocaleContextHolder.getLocale());
+        String noBestPriceText = messageSource.getMessage("best-price-not-found-text", null, LocaleContextHolder.getLocale());
+        String noBestPriceLinkText = messageSource.getMessage("best-price-not-found-link-text", null, LocaleContextHolder.getLocale());
+        String bggRank = messageSource.getMessage("bgg-rank", null, LocaleContextHolder.getLocale());
 
         TextFormatter textFormatter = notifier.getTextFormatter()
                 .bold(entity.getName())
@@ -150,9 +159,21 @@ public class NotifyServiceImpl implements NotifyService {
         }
 
         if (Objects.nonNull(entity.getBestPrice())) {
-            textFormatter
-                    .keyValueLink(comparisonPriceText, entity.getBestPrice(), entity.getBestPriceUrl())
-                    .newLine();
+            if (entity.getBestPrice().isBlank()) {
+                textFormatter.keyValueLink(comparisonPriceText, noBestPriceLinkText, entity.getBestPriceUrl())
+                        .newLine();
+            } else {
+                textFormatter
+                        .keyValueLink(comparisonPriceText, entity.getBestPrice(), entity.getBestPriceUrl())
+                        .newLine();
+            }
+        } else {
+            if (entity.isBestPricePossible()) {
+                textFormatter.normal(noBestPriceText)
+                        .normal(" ")
+                        .link(noBestPriceLinkText, bestPriceConfig.getSearchUrl(bestPriceNameStrategy.getNameForSearch(entity.getName())))
+                        .newLine();
+            }
         }
 
         if (Objects.nonNull(entity.getStockText())) {
@@ -164,13 +185,15 @@ public class NotifyServiceImpl implements NotifyService {
             textFormatter
                     .newLine()
                     .keyValueLink(bggRatingText, entity.getBggRating(), entity.getBggLink())
+                    .normal(" (" + entity.getBggUserRated() + ")")
+                    .newLine()
+                    .keyValue(bggRank, entity.getBggRank())
                     .newLine()
                     .keyValue(bggWishText, entity.getBggWishing())
                     .newLine()
                     .keyValue(bggWantText, entity.getBggWanting())
                     .newLine();
         }
-
 
         textFormatter
                 .newLine()

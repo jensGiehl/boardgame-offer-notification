@@ -61,15 +61,24 @@ public class DataEntity {
 
     private Integer bggWanting;
 
+    private Integer bggNameCounter;
+
+    private Long bggUserRated;
+
     private String bggLink;
 
     private boolean enableBgg;
+
+    private Long bggRank;
 
     private String bestPrice;
 
     private String bestPriceUrl;
 
     private boolean enableBestPrice;
+
+    @Builder.Default
+    private boolean bestPricePossible = true;
 
     private CrawlerName crawlerName;
 

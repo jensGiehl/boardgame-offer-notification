@@ -2,6 +2,7 @@ package de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote;
 
 import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClient;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClientException;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebResult;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -11,9 +12,7 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -27,15 +26,25 @@ public class BrettspielAngebotePriceFinderImpl implements BrettspielAngebotePric
     private BrettspielAngeboteNameStrategy nameStrategy;
 
     @Override
-    public Optional<BrettspielAngeboteDto> getCurrentPriceFor(String name) {
+    public WebResult<BrettspielAngeboteDto> getCurrentPriceFor(String name) {
         name = nameStrategy.getNameForSearch(name);
 
-        String url = config.getSearchUrl() + URLEncoder.encode(name, StandardCharsets.UTF_8);
-        Document document = webClient.loadDocumentFromUrl(url);
+        String url = config.getSearchUrl(name);
+        Document document = null;
+
+        try {
+            document = webClient.loadDocumentFromUrl(url);
+        } catch (WebClientException ex) {
+            return WebResult.<BrettspielAngeboteDto>builder()
+                    .status(WebResult.SearchStatus.ERROR)
+                    .build();
+        }
 
         if (!document.select(config.getNoResultsSelector()).isEmpty()) {
             log.debug("No results found for {}", name);
-            return Optional.empty();
+            return WebResult.<BrettspielAngeboteDto>builder()
+                    .status(WebResult.SearchStatus.NOT_FOUND)
+                    .build();
         }
 
         Elements allResults = webClient.getElements(document, config.getResultTableSelector());
@@ -67,8 +76,11 @@ public class BrettspielAngebotePriceFinderImpl implements BrettspielAngebotePric
 
             log.debug("Found {}", dto);
 
-            if (baName.equalsIgnoreCase(name)) {
-                return Optional.of(dto);
+            if (baName.equalsIgnoreCase(name) || allResults.size() == 1) {
+                return WebResult.<BrettspielAngeboteDto>builder()
+                        .status(WebResult.SearchStatus.FOUND)
+                        .result(dto)
+                        .build();
             }
         }
 
@@ -76,11 +88,13 @@ public class BrettspielAngebotePriceFinderImpl implements BrettspielAngebotePric
             log.info("Found {} results but nothing matches to '{}'", allResults.size(), name);
         }
 
-        return Optional.empty();
+        return WebResult.<BrettspielAngeboteDto>builder()
+                .status(WebResult.SearchStatus.NOT_FOUND)
+                .build();
     }
 
     @Override
-    public Optional<BrettspielAngeboteBggDto> getCurrentPriceForBggItem(Long id) {
+    public WebResult<BrettspielAngeboteBggDto> getCurrentPriceForBggItem(Long id) {
         String url = UriComponentsBuilder
                 .fromHttpUrl(config.getBggLinkUrl())
                 .path("/" + id)
@@ -95,9 +109,17 @@ public class BrettspielAngebotePriceFinderImpl implements BrettspielAngebotePric
             if (NumberUtils.isParsable(price)) {
                 price = String.format("%,.2f %s", Double.parseDouble(price), currency);
             }
-            return Optional.of(BrettspielAngeboteBggDto.builder().currentPrice(price).url(url).build());
+
+            BrettspielAngeboteBggDto dto = BrettspielAngeboteBggDto.builder().currentPrice(price).url(url).build();
+
+            return WebResult.<BrettspielAngeboteBggDto>builder()
+                    .status(WebResult.SearchStatus.FOUND)
+                    .result(dto)
+                    .build();
         } catch (WebClientException e) {
-            return Optional.empty();
+            return WebResult.<BrettspielAngeboteBggDto>builder()
+                    .status(WebResult.SearchStatus.ERROR)
+                    .build();
         }
     }
 

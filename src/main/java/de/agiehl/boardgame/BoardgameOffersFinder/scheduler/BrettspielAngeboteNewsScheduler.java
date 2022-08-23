@@ -51,6 +51,7 @@ public class BrettspielAngeboteNewsScheduler {
                 .description(dto.getDescription())
                 .name(dto.getTitle())
                 .url(dto.getUrl())
+                .bestPricePossible(false)
                 .build();
     }
 

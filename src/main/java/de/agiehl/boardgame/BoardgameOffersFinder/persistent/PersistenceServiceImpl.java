@@ -74,6 +74,10 @@ public class PersistenceServiceImpl implements PersistenceService {
                 entity.getBggWanting(),
                 entity.getBggLink(),
                 entity.isEnableBgg(),
+                entity.getBggUserRated(),
+                entity.getBggNameCounter(),
+                entity.getBggFailCount(),
+                entity.getBggRank(),
                 entity.getId()
         );
 
@@ -87,6 +91,7 @@ public class PersistenceServiceImpl implements PersistenceService {
                 entity.getBestPrice(),
                 entity.getBestPriceUrl(),
                 entity.isEnableBestPrice(),
+                entity.isBestPricePossible(),
                 entity.getId()
         );
 
@@ -113,6 +118,16 @@ public class PersistenceServiceImpl implements PersistenceService {
 
             repository.updateNotificationFailCount(newFailCount, entity.getId());
             log.warn("Setting notification fail count for {} to {}", entity, newFailCount);
+        });
+    }
+
+    @Override
+    public void increaseBestPriceFailCount(DataEntity entity) {
+        repository.findById(entity.getId()).ifPresent(currentEntity -> {
+            int newFailCount = currentEntity.getBestPriceFailCount() + 1;
+
+            repository.updateBestPriceFailCount(newFailCount, entity.getId());
+            log.warn("Setting best price fail count for {} to {}", entity, newFailCount);
         });
     }
 

@@ -1,11 +1,11 @@
 package de.agiehl.boardgame.BoardgameOffersFinder.web.bgg;
 
-import java.util.Optional;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebResult;
 
 public interface BoardgameGeekService {
-    Optional<BoardgameGeekSearchDto> searchForBoardgame(String name);
+    WebResult<BoardgameGeekSearchDto> searchForBoardgame(String name, Integer nameCounter);
 
-    Optional<BoardgameGeekDto> getBoardgameInfos(Long id);
+    WebResult<BoardgameGeekDto> getBoardgameInfos(Long id);
 
-    Optional<BoardgameGeekDto> searchAndGet(String name);
+    WebResult<BoardgameGeekDto> searchAndGet(String name, Integer nameCounter);
 }

@@ -14,6 +14,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
@@ -35,9 +36,17 @@ public class NotifyServiceImpl implements NotifyService {
 
     private BrettspielAngeboteNameStrategy bestPriceNameStrategy;
 
+    private static final LocalDateTime startup = LocalDateTime.now();
+
     @Override
     public void notify(DataEntity entity) {
         if (Boolean.FALSE.equals(config.getEnable())) {
+            return;
+        }
+
+        if (LocalDateTime.now().isBefore(startup.plus(config.getIgnoreTime()))) {
+            disableNotificationForEntity(entity);
+            log.info("Ignoring notification for {}", entity);
             return;
         }
 

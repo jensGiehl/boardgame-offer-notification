@@ -4,6 +4,7 @@ import de.agiehl.boardgame.BoardgameOffersFinder.notify.NotifyService;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.DataEntity;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.PersistenceService;
 import de.agiehl.boardgame.BoardgameOffersFinder.scheduler.config.BggSchedulerConfig;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClientException;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.WebResult;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.bgg.BoardgameGeekDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.bgg.BoardgameGeekService;
@@ -43,7 +44,7 @@ public class BggScheduler {
         CircuitBreaker circuitBreaker = circuitBreakerFactory.create("bgg");
 
         WebResult<BoardgameGeekDto> boardgameGeekDto = circuitBreaker.run(
-                () -> bggService.searchAndGet(entity.getName(), entity.getBggNameCounter()),
+                () -> searchAndGetBggInformationFor(entity),
                 throwable -> WebResult.<BoardgameGeekDto>builder().status(WebResult.SearchStatus.ERROR).build()
         );
 
@@ -66,6 +67,15 @@ public class BggScheduler {
         }
 
         persistenceService.saveBggInformation(entity);
+    }
+
+    private WebResult<BoardgameGeekDto> searchAndGetBggInformationFor(DataEntity entity) {
+        WebResult<BoardgameGeekDto> result = bggService.searchAndGet(entity.getName(), entity.getBggNameCounter());
+        if (result.getStatus() == WebResult.SearchStatus.ERROR) {
+            throw new WebClientException("An error occurred!");
+        }
+
+        return result;
     }
 
 }

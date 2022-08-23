@@ -4,6 +4,7 @@ import de.agiehl.boardgame.BoardgameOffersFinder.notify.NotifyService;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.DataEntity;
 import de.agiehl.boardgame.BoardgameOffersFinder.persistent.PersistenceService;
 import de.agiehl.boardgame.BoardgameOffersFinder.scheduler.config.BestPriceSchedulerConfig;
+import de.agiehl.boardgame.BoardgameOffersFinder.web.WebClientException;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.WebResult;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngeboteBggDto;
 import de.agiehl.boardgame.BoardgameOffersFinder.web.brettspielangebote.BrettspielAngeboteDto;
@@ -55,7 +56,7 @@ public class BestPriceScheduler {
 
         if (Objects.nonNull(entity.getBggId())) {
             WebResult<BrettspielAngeboteBggDto> currentPriceForBggItem = circuitBreaker.run(
-                    () -> brettspielAngebotePriceFinder.getCurrentPriceForBggItem(entity.getBggId()),
+                    () -> getCurrentPriceForBggItem(entity),
                     throwable -> WebResult.<BrettspielAngeboteBggDto>builder().status(WebResult.SearchStatus.ERROR).build());
 
             if (currentPriceForBggItem.getStatus() == WebResult.SearchStatus.FOUND) {
@@ -72,7 +73,7 @@ public class BestPriceScheduler {
             }
         } else {
             WebResult<BrettspielAngeboteDto> currentPrice = circuitBreaker.run(
-                    () -> brettspielAngebotePriceFinder.getCurrentPriceFor(entity.getName()),
+                    () -> getCurrentPriceFor(entity),
                     throwable -> WebResult.<BrettspielAngeboteDto>builder().status(WebResult.SearchStatus.ERROR).build());
 
             if (currentPrice.getStatus() == WebResult.SearchStatus.FOUND) {
@@ -90,6 +91,26 @@ public class BestPriceScheduler {
         }
 
         persistenceService.saveBestPriceInformation(entity);
+    }
+
+    private WebResult<BrettspielAngeboteDto> getCurrentPriceFor(DataEntity entity) {
+        WebResult<BrettspielAngeboteDto> result = brettspielAngebotePriceFinder.getCurrentPriceFor(entity.getName());
+
+        if (result.getStatus() == WebResult.SearchStatus.ERROR) {
+            throw new WebClientException("An error occurred");
+        }
+
+        return result;
+    }
+
+    private WebResult<BrettspielAngeboteBggDto> getCurrentPriceForBggItem(DataEntity entity) {
+        WebResult<BrettspielAngeboteBggDto> result = brettspielAngebotePriceFinder.getCurrentPriceForBggItem(entity.getBggId());
+
+        if (result.getStatus() == WebResult.SearchStatus.ERROR) {
+            throw new WebClientException("An error occurred!");
+        }
+
+        return result;
     }
 
 }
